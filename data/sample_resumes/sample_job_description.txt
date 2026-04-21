@@ -1,0 +1,50 @@
+Machine Learning Engineer - Senior Level
+
+Company: TechCorp AI Solutions
+Location: San Francisco, CA (Remote friendly)
+Experience: 3-5 years
+
+Job Description:
+We are seeking a talented Machine Learning Engineer to join our growing AI team. You will be responsible for designing, implementing, and deploying machine learning models that power our core products and drive business value.
+
+Key Responsibilities:
+• Design and develop machine learning models for various business applications
+• Implement scalable ML pipelines using modern MLOps practices
+• Collaborate with data scientists and software engineers to productionize models
+• Optimize model performance and monitor production systems
+• Research and evaluate new ML techniques and technologies
+• Mentor junior team members and contribute to technical documentation
+
+Required Skills:
+• Python programming with 3+ years of experience
+• Machine Learning frameworks (TensorFlow, PyTorch, scikit-learn)
+• SQL and database management
+• Cloud platforms (AWS, GCP, or Azure)
+• Docker and containerization
+• Git version control
+• Strong mathematical and statistical background
+• Experience with data preprocessing and feature engineering
+
+Preferred Skills:
+• MLOps tools (MLflow, Kubeflow, Airflow)
+• Deep Learning and Neural Networks
+• Natural Language Processing (NLP)
+• Computer Vision
+• Distributed computing (Spark, Dask)
+• Kubernetes orchestration
+• A/B testing and experimentation
+• Agile development methodologies
+
+Education:
+• Bachelor's or Master's degree in Computer Science, Data Science, Mathematics, or related field
+• Relevant certifications in ML/AI are a plus
+
+What We Offer:
+• Competitive salary ($120,000 - $160,000)
+• Comprehensive health benefits
+• Flexible work arrangements
+• Professional development budget
+• Stock options
+• Collaborative and innovative work environment
+
+Apply now to join our mission of building the future of AI!
