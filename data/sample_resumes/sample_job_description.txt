@@ -1,50 +1,94 @@
-Machine Learning Engineer - Senior Level
+Job Title: Senior Machine Learning Engineer — NLP & Resume Intelligence
 
-Company: TechCorp AI Solutions
-Location: San Francisco, CA (Remote friendly)
-Experience: 3-5 years
+Company: (redacted for demo — replace with actual company name)
+Location: Remote / Hybrid — San Francisco Bay Area preferred
+Experience Level: Senior (5–8 years)
 
-Job Description:
-We are seeking a talented Machine Learning Engineer to join our growing AI team. You will be responsible for designing, implementing, and deploying machine learning models that power our core products and drive business value.
+─────────────────────────────────────────────────────────────────────────────
+ABOUT THE ROLE
+─────────────────────────────────────────────────────────────────────────────
 
-Key Responsibilities:
-• Design and develop machine learning models for various business applications
-• Implement scalable ML pipelines using modern MLOps practices
-• Collaborate with data scientists and software engineers to productionize models
-• Optimize model performance and monitor production systems
-• Research and evaluate new ML techniques and technologies
-• Mentor junior team members and contribute to technical documentation
+We are building an AI-powered hiring platform that makes recruitment smarter,
+faster, and fairer. As a Senior ML Engineer, you will design and ship the core
+NLP pipeline that powers our resume screening and candidate ranking engine.
 
-Required Skills:
-• Python programming with 3+ years of experience
-• Machine Learning frameworks (TensorFlow, PyTorch, scikit-learn)
-• SQL and database management
-• Cloud platforms (AWS, GCP, or Azure)
-• Docker and containerization
-• Git version control
-• Strong mathematical and statistical background
-• Experience with data preprocessing and feature engineering
+You will work across the full ML lifecycle — data collection, modelling,
+evaluation, deployment, and monitoring — with a strong focus on semantic
+understanding and fairness-aware AI.
 
-Preferred Skills:
-• MLOps tools (MLflow, Kubeflow, Airflow)
-• Deep Learning and Neural Networks
-• Natural Language Processing (NLP)
-• Computer Vision
-• Distributed computing (Spark, Dask)
-• Kubernetes orchestration
-• A/B testing and experimentation
-• Agile development methodologies
+─────────────────────────────────────────────────────────────────────────────
+REQUIRED SKILLS & QUALIFICATIONS
+─────────────────────────────────────────────────────────────────────────────
 
-Education:
-• Bachelor's or Master's degree in Computer Science, Data Science, Mathematics, or related field
-• Relevant certifications in ML/AI are a plus
+Programming & Foundations:
+  - Python (5+ years, production-grade code)
+  - Strong understanding of data structures, algorithms, and complexity
+  - SQL and NoSQL databases (PostgreSQL, MongoDB, Redis)
+  - Git and collaborative development workflows
 
-What We Offer:
-• Competitive salary ($120,000 - $160,000)
-• Comprehensive health benefits
-• Flexible work arrangements
-• Professional development budget
-• Stock options
-• Collaborative and innovative work environment
+Machine Learning & NLP:
+  - PyTorch or TensorFlow (production model training and serving)
+  - Natural Language Processing: spaCy, NLTK, Hugging Face Transformers
+  - Sentence embeddings and semantic similarity (sentence-transformers, BERT)
+  - Vector databases and similarity search: FAISS, Pinecone, or Qdrant
+  - Resume parsing: experience with PDF/DOCX text extraction (PyMuPDF, pdfplumber)
+  - Ranking systems: familiarity with NDCG, MAP, Precision@K
 
-Apply now to join our mission of building the future of AI!
+Systems & Infrastructure:
+  - REST API development: FastAPI or Flask
+  - Docker and container orchestration (Kubernetes preferred)
+  - Cloud platforms: AWS (SageMaker, S3, EKS) or GCP (Vertex AI)
+  - CI/CD pipelines (GitHub Actions, CircleCI, or similar)
+
+─────────────────────────────────────────────────────────────────────────────
+PREFERRED / NICE-TO-HAVE SKILLS
+─────────────────────────────────────────────────────────────────────────────
+
+  - Experience with fairness-aware ML and bias detection (Fairlearn, AIF360)
+  - Understanding of EEOC guidelines and four-fifths rule for adverse impact
+  - Streamlit or similar dashboard/visualisation experience
+  - OpenAI API integration and prompt engineering
+  - MLflow, Weights & Biases, or similar experiment tracking tools
+  - Experience with multimodal data (structured + unstructured text)
+  - Published research or open source contributions in NLP or IR
+
+─────────────────────────────────────────────────────────────────────────────
+WHAT YOU WILL DO
+─────────────────────────────────────────────────────────────────────────────
+
+  - Design and own the resume understanding pipeline (parsing → embedding → ranking)
+  - Research and evaluate embedding models for semantic resume-JD matching
+  - Build and maintain fairness monitoring systems to ensure EEOC compliance
+  - Develop explainable AI components that justify candidate rankings in plain English
+  - Collaborate with Engineering on API design and performance optimisation
+  - Write thorough tests, monitoring dashboards, and technical documentation
+  - Mentor junior ML engineers on NLP best practices and system design
+
+─────────────────────────────────────────────────────────────────────────────
+IDEAL CANDIDATE PROFILE
+─────────────────────────────────────────────────────────────────────────────
+
+  - 5–8 years of hands-on ML/NLP engineering experience
+  - At least 2 years deploying models to production at meaningful scale
+  - Comfortable owning a problem from research to production
+  - Strong communicator who can translate ML results into business decisions
+  - Passionate about using AI responsibly, with awareness of bias and fairness
+
+─────────────────────────────────────────────────────────────────────────────
+NOTE FOR AI SCREENER DEMO
+─────────────────────────────────────────────────────────────────────────────
+
+This job description is used as the reference target for the sample resume
+dataset in data/sample_resumes/. The expected ranking order is approximately:
+
+  #1 Priya Sharma (data_scientist)      — direct domain hit, high skill overlap
+  #2 Aisha Rodriguez (mlops_engineer)   — strong FAISS/embedding pipeline exp
+  #3 Alex Chen (software_engineer)      — solid ML, good all-rounder
+  #4 Dr. Sarah Okonkwo (nlp_scientist)  — hidden gem: semantic match, different vocab
+  #5 Marcus Johnson (fullstack_dev)     — growing ML interest, junior
+  #6 James Whitfield (hr_manager)       — non-technical, correctly ranks last
+
+Sarah Okonkwo demonstrates the "hidden gem" effect: keyword matching gives her
+~15% (she never says "resume screening"), but semantic matching gives ~75%
+because bi-encoder similarity, document understanding → semantic search,
+algorithmic fairness all map correctly to the job requirements.
