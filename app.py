@@ -5,11 +5,12 @@ import logging
 import os
 import tempfile
 from pathlib import Path
-from typing import List, Optional
+import io
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+from fpdf import FPDF
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -237,6 +238,82 @@ def display_fairness_report(fairness_report):
                 st.text(f"• {rec}")
 
 
+def generate_pdf_report(results, job_desc):
+    """Generate a PDF report of the screening results."""
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Title
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(0, 10, f"AI Resume Screening Report", ln=True, align='C')
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 10, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align='C')
+    pdf.ln(10)
+    
+    # Job Info
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Job Information", ln=True)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 8, f"Title: {job_desc.title}", ln=True)
+    # Removing non-ascii chars to avoid fpdf encoding issues
+    req_skills = ", ".join(job_desc.required_skills).encode('ascii', 'ignore').decode('ascii')
+    pdf.multi_cell(0, 8, f"Required Skills: {req_skills}")
+    pdf.ln(5)
+    
+    # Summary
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Screening Summary", ln=True)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(0, 8, f"Total Resumes Processed: {results.successfully_parsed}", ln=True)
+    if results.fairness_report:
+        pdf.cell(0, 8, f"Overall Fairness Score: {results.fairness_report.get_overall_fairness_score():.1%}", ln=True)
+    pdf.ln(5)
+    
+    # Top Candidates
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(0, 10, "Top Rank Candidates", ln=True)
+    
+    for c in results.ranked_candidates[:10]:
+        name = c.resume.contact_info.name if c.resume.contact_info else "Unknown"
+        name = name.encode('ascii', 'ignore').decode('ascii')
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 8, f"#{c.rank} - {name} (Score: {c.hybrid_score:.1%})", ln=True)
+        pdf.set_font("Arial", '', 11)
+        pdf.cell(0, 6, f"Semantic: {c.semantic_score:.1%} | Skill Match: {c.skill_score:.1%}", ln=True)
+        
+        if c.explanation:
+            expl = c.explanation.replace('\n', ' ').encode('ascii', 'ignore').decode('ascii')
+            pdf.multi_cell(0, 6, f"Summary: {expl}")
+        pdf.ln(4)
+        
+    return pdf.output(dest='S').encode('latin1')
+
+def create_candidate_comparison_chart(candidates):
+    """Create a radar chart comparing selected highly ranked candidates."""
+    if not candidates:
+        return None
+        
+    fig = go.Figure()
+    
+    for candidate in candidates[:3]: # Compare top 3
+        name = candidate.resume.contact_info.name if candidate.resume.contact_info else "Unknown"
+        
+        fig.add_trace(go.Scatterpolar(
+            r=[candidate.semantic_score, candidate.skill_score, candidate.hybrid_score, 
+               candidate.semantic_score], # closing the loop
+            theta=['Semantic', 'Skill', 'Hybrid', 'Semantic'],
+            fill='toself',
+            name=name
+        ))
+        
+    fig.update_layout(
+        polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+        showlegend=True,
+        title="Candidate Profile Comparison (Top 3)"
+    )
+    return fig
+
+
 def main():
     """Main application function."""
     initialize_session_state()
@@ -449,7 +526,17 @@ def main():
             
             with col2:
                 if st.button("📄 Generate Report"):
-                    st.info("PDF report generation coming soon!")
+                    # Generate PDF bytes
+                    try:
+                        pdf_bytes = generate_pdf_report(results, st.session_state.job_description)
+                        st.download_button(
+                            label="Download PDF Report",
+                            data=pdf_bytes,
+                            file_name=f"resume_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                            mime="application/pdf"
+                        )
+                    except Exception as e:
+                        st.error(f"Failed to generate PDF: {str(e)}")
         
         else:
             st.info("👆 Upload resumes and process them in the 'Upload & Process' tab to see results here.")
@@ -489,6 +576,12 @@ def main():
                 
                 with col3:
                     st.metric("Score Range", f"{min(scores):.1%} - {max(scores):.1%}")
+                
+                # Candidate Comparison Radar
+                st.subheader("Candidate Comparison")
+                fig_compare = create_candidate_comparison_chart(candidates)
+                if fig_compare:
+                    st.plotly_chart(fig_compare, use_container_width=True)
         
         else:
             st.info("👆 Process some resumes first to see analytics here.")
