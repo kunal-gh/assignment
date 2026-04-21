@@ -9,8 +9,8 @@ import numpy as np
 
 from src.parsers.resume_parser import ResumeParser
 from src.models.job import JobDescription
-from src.models.resume import ResumeData
-from src.models.ranking import RankedCandidate, ContactInfo
+from src.models.resume import ResumeData, ContactInfo
+from src.models.ranking import RankedCandidate
 from src.embeddings.embedding_generator import EmbeddingGenerator
 from src.ranking.ranking_engine import RankingEngine
 from src.ranking.skill_matcher import SkillMatcher
