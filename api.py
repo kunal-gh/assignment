@@ -7,9 +7,12 @@ import tempfile
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from pydantic import BaseModel, Field
 import pandas as pd
 import io
@@ -41,6 +44,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 # In-memory job store (replace with Redis/DB in production)
 _job_store: Dict[str, Any] = {}
@@ -128,7 +145,8 @@ def get_engine(semantic_weight: float = 0.7, skill_weight: float = 0.3,
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
-async def health_check():
+@limiter.limit("60/minute")
+async def health_check(request: Request):
     """Health check endpoint for monitoring and load balancers."""
     return HealthResponse(
         status="healthy",
@@ -136,15 +154,16 @@ async def health_check():
         timestamp=datetime.utcnow().isoformat(),
     )
 
-
 @app.get("/", tags=["System"])
-async def root():
+@limiter.limit("60/minute")
+async def root(request: Request):
     """API root — redirects to docs."""
     return {"message": "AI Resume Screener API", "docs": "/docs", "version": "1.0.0"}
 
-
 @app.post("/screen", response_model=ScreeningResult, tags=["Screening"])
+@limiter.limit("10/minute")
 async def screen_resumes(
+    request: Request,
     files: List[UploadFile] = File(..., description="Resume files (PDF or DOCX)"),
     job_title: str = "Software Engineer",
     job_description: str = "We are looking for a skilled engineer...",
@@ -263,7 +282,8 @@ async def screen_resumes(
 
 
 @app.get("/results/{job_id}", response_model=ScreeningResult, tags=["Screening"])
-async def get_results(job_id: str):
+@limiter.limit("30/minute")
+async def get_results(request: Request, job_id: str):
     """Retrieve screening results for a previous job by ID."""
     if job_id not in _job_store:
         raise HTTPException(status_code=404, detail=f"Job ID '{job_id}' not found")
@@ -271,7 +291,8 @@ async def get_results(job_id: str):
 
 
 @app.get("/results/{job_id}/export/csv", tags=["Export"])
-async def export_csv(job_id: str):
+@limiter.limit("10/minute")
+async def export_csv(request: Request, job_id: str):
     """Export screening results as a CSV file download."""
     if job_id not in _job_store:
         raise HTTPException(status_code=404, detail=f"Job ID '{job_id}' not found")
@@ -308,17 +329,18 @@ async def export_csv(job_id: str):
 
 
 @app.post("/analyze/jd", tags=["Analysis"])
-async def analyze_job_description(request: JobDescriptionRequest):
+@limiter.limit("20/minute")
+async def analyze_job_description(request: Request, body: JobDescriptionRequest):
     """
     Analyze a job description — extract required skills, experience level,
     and provide a preview of what the system will match against.
     """
     job_desc = JobDescription(
-        title=request.title,
-        description=request.description,
-        required_skills=request.required_skills or [],
-        preferred_skills=request.preferred_skills or [],
-        experience_level=request.experience_level or "mid",
+        title=body.title,
+        description=body.description,
+        required_skills=body.required_skills or [],
+        preferred_skills=body.preferred_skills or [],
+        experience_level=body.experience_level or "mid",
     )
 
     return {
@@ -336,7 +358,8 @@ async def analyze_job_description(request: JobDescriptionRequest):
 
 
 @app.get("/models", tags=["Configuration"])
-async def list_models():
+@limiter.limit("60/minute")
+async def list_models(request: Request):
     """List available embedding models with their characteristics."""
     return {
         "models": [
@@ -369,7 +392,8 @@ async def list_models():
 
 
 @app.get("/metrics", tags=["System"])
-async def system_metrics():
+@limiter.limit("60/minute")
+async def system_metrics(request: Request):
     """System metrics — cached jobs, engine instances."""
     return {
         "cached_jobs": len(_job_store),
