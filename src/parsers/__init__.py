@@ -7,7 +7,7 @@ from .text_extractor import TextExtractor
 
 __all__ = [
     "ResumeParser",
-    "TextExtractor", 
+    "TextExtractor",
     "SectionParser",
     "SkillExtractor",
 ]

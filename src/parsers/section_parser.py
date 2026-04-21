@@ -96,8 +96,7 @@ SECTION_HEADER_PATTERNS: Dict[str, List[str]] = {
 
 # Pre-compile patterns for performance
 _COMPILED_SECTION_PATTERNS: Dict[str, List[re.Pattern]] = {
-    key: [re.compile(r"^\s*" + pat + r"\s*:?\s*$", re.IGNORECASE | re.MULTILINE)
-          for pat in patterns]
+    key: [re.compile(r"^\s*" + pat + r"\s*:?\s*$", re.IGNORECASE | re.MULTILINE) for pat in patterns]
     for key, patterns in SECTION_HEADER_PATTERNS.items()
 }
 
@@ -111,22 +110,13 @@ _GENERIC_HEADER_RE = re.compile(
 # Contact extraction patterns
 # ---------------------------------------------------------------------------
 
-_EMAIL_RE = re.compile(
-    r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", re.IGNORECASE
-)
+_EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", re.IGNORECASE)
 _PHONE_RE = re.compile(
-    r"(?:\+?1[\s\-.]?)?"
-    r"(?:\(?\d{3}\)?[\s\-.]?)"
-    r"\d{3}[\s\-.]?\d{4}"
-    r"(?:\s*(?:ext|x|ext\.)\s*\d{1,5})?",
+    r"(?:\+?1[\s\-.]?)?" r"(?:\(?\d{3}\)?[\s\-.]?)" r"\d{3}[\s\-.]?\d{4}" r"(?:\s*(?:ext|x|ext\.)\s*\d{1,5})?",
     re.IGNORECASE,
 )
-_LINKEDIN_RE = re.compile(
-    r"(?:https?://)?(?:www\.)?linkedin\.com/in/[\w\-]+/?", re.IGNORECASE
-)
-_GITHUB_RE = re.compile(
-    r"(?:https?://)?(?:www\.)?github\.com/[\w\-]+/?", re.IGNORECASE
-)
+_LINKEDIN_RE = re.compile(r"(?:https?://)?(?:www\.)?linkedin\.com/in/[\w\-]+/?", re.IGNORECASE)
+_GITHUB_RE = re.compile(r"(?:https?://)?(?:www\.)?github\.com/[\w\-]+/?", re.IGNORECASE)
 
 # ---------------------------------------------------------------------------
 # Experience / Education date patterns
@@ -305,9 +295,7 @@ class SectionParser:
     # Section boundary detection
     # ------------------------------------------------------------------
 
-    def _find_section_boundaries(
-        self, text: str
-    ) -> List[Tuple[str, int, int]]:
+    def _find_section_boundaries(self, text: str) -> List[Tuple[str, int, int]]:
         """
         Return list of (section_key, line_start_pos, content_start_pos) tuples
         sorted by position in the text.
@@ -389,18 +377,13 @@ class SectionParser:
             if not line:
                 continue
             # Skip lines that contain obvious non-name content
-            if any(
-                marker in line.lower()
-                for marker in ("@", "http", "phone", "email", "address", "linkedin")
-            ):
+            if any(marker in line.lower() for marker in ("@", "http", "phone", "email", "address", "linkedin")):
                 continue
             if _EMAIL_RE.search(line) or _PHONE_RE.search(line):
                 continue
             # A name is typically 2-4 words, each capitalised
             words = line.split()
-            if 2 <= len(words) <= 5 and all(
-                w[0].isupper() for w in words if w.isalpha()
-            ):
+            if 2 <= len(words) <= 5 and all(w[0].isupper() for w in words if w.isalpha()):
                 return line
         return None
 
@@ -422,20 +405,14 @@ class SectionParser:
         if self._nlp is not None:
             try:
                 doc = self._nlp(snippet)
-                gpe_entities = [
-                    ent.text.strip()
-                    for ent in doc.ents
-                    if ent.label_ in ("GPE", "LOC")
-                ]
+                gpe_entities = [ent.text.strip() for ent in doc.ents if ent.label_ in ("GPE", "LOC")]
                 if gpe_entities:
                     return ", ".join(gpe_entities[:2])
             except Exception as exc:
                 logger.debug("spaCy NER failed for location extraction: %s", exc)
 
         # Fallback: look for "City, State" or "City, Country" pattern
-        loc_re = re.compile(
-            r"\b([A-Z][a-zA-Z\s]+),\s*([A-Z]{2}|[A-Z][a-zA-Z]+)\b"
-        )
+        loc_re = re.compile(r"\b([A-Z][a-zA-Z\s]+),\s*([A-Z]{2}|[A-Z][a-zA-Z]+)\b")
         match = loc_re.search(snippet)
         if match:
             return match.group(0)
@@ -595,12 +572,7 @@ class SectionParser:
         # Find institution (line that doesn't contain degree keywords and isn't a date)
         for line in lines:
             clean = _DATE_RANGE_RE.sub("", line).strip()
-            if (
-                clean
-                and not _DEGREE_KEYWORDS.search(clean)
-                and not _GPA_RE.search(clean)
-                and clean != degree
-            ):
+            if clean and not _DEGREE_KEYWORDS.search(clean) and not _GPA_RE.search(clean) and clean != degree:
                 institution = clean
                 break
 

@@ -7,7 +7,7 @@ from .text_utils import clean_text, normalize_text
 __all__ = [
     "setup_logging",
     "validate_file",
-    "get_file_info", 
+    "get_file_info",
     "clean_text",
     "normalize_text",
 ]

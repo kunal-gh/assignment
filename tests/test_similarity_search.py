@@ -84,9 +84,7 @@ class TestInit:
 
         We patch the constructor to avoid loading a real model in CI.
         """
-        with patch(
-            "src.ranking.similarity_search.EmbeddingGenerator"
-        ) as MockGen:
+        with patch("src.ranking.similarity_search.EmbeddingGenerator") as MockGen:
             mock_instance = MagicMock()
             mock_instance.model_name = "all-MiniLM-L6-v2"
             MockGen.return_value = mock_instance

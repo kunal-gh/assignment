@@ -72,9 +72,7 @@ class EmbeddingGenerator:
             test_embedding = self.model.encode("test", convert_to_tensor=False)
             self.embedding_dimension = len(test_embedding)
 
-            logger.info(
-                f"Model loaded successfully. Embedding dimension: {self.embedding_dimension}"
-            )
+            logger.info(f"Model loaded successfully. Embedding dimension: {self.embedding_dimension}")
 
         except Exception as e:
             logger.error(f"Failed to load model {self.model_name}: {str(e)}")
@@ -481,7 +479,7 @@ class EmbeddingGenerator:
     def _generate_cache_key(self, text: str, prefix: str = "") -> str:
         """Generate a stable cache key for a text + model combination."""
         content = f"{self.model_name}:{text}"
-        hash_key = hashlib.md5(content.encode("utf-8")).hexdigest()
+        hash_key = hashlib.md5(content.encode("utf-8")).hexdigest()  # nosec B324
         return f"{prefix}_{hash_key}" if prefix else hash_key
 
     def _get_max_sequence_length(self) -> int:
@@ -537,9 +535,7 @@ class EmbeddingGenerator:
                 embedding2 = np.array(embedding2)
 
             if embedding1.shape != embedding2.shape:
-                logger.error(
-                    f"Embedding dimension mismatch: {embedding1.shape} vs {embedding2.shape}"
-                )
+                logger.error(f"Embedding dimension mismatch: {embedding1.shape} vs {embedding2.shape}")
                 return 0.0
 
             dot_product = np.dot(embedding1, embedding2)

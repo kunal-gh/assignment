@@ -7,9 +7,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 # We patch the heavy ML components before importing the app
-with patch("src.parsers.resume_parser.ResumeParser"), \
-     patch("src.embeddings.embedding_generator.EmbeddingGenerator"), \
-     patch("src.ranking.ranking_engine.RankingEngine"):
+with patch("src.parsers.resume_parser.ResumeParser"), patch("src.embeddings.embedding_generator.EmbeddingGenerator"), patch(
+    "src.ranking.ranking_engine.RankingEngine"
+):
     from api import app
 
 client = TestClient(app)

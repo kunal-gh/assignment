@@ -9,6 +9,7 @@ from src.parsers.section_parser import SectionParser
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def parser():
     return SectionParser()
@@ -53,6 +54,7 @@ AWS Certified Solutions Architect
 # ---------------------------------------------------------------------------
 # parse_sections
 # ---------------------------------------------------------------------------
+
 
 class TestParseSections:
     def test_returns_dict(self, parser):
@@ -119,6 +121,7 @@ class TestParseSections:
 # extract_contact_info
 # ---------------------------------------------------------------------------
 
+
 class TestExtractContactInfo:
     def test_returns_contact_info_object(self, parser):
         result = parser.extract_contact_info(SAMPLE_RESUME[:300])
@@ -173,6 +176,7 @@ class TestExtractContactInfo:
 # extract_experience
 # ---------------------------------------------------------------------------
 
+
 class TestExtractExperience:
     def test_returns_list(self, parser):
         sections = parser.parse_sections(SAMPLE_RESUME)
@@ -217,6 +221,7 @@ class TestExtractExperience:
 # ---------------------------------------------------------------------------
 # extract_education
 # ---------------------------------------------------------------------------
+
 
 class TestExtractEducation:
     def test_returns_list(self, parser):
@@ -263,6 +268,7 @@ class TestExtractEducation:
 # ---------------------------------------------------------------------------
 # Integration: full resume round-trip
 # ---------------------------------------------------------------------------
+
 
 class TestFullResumeRoundTrip:
     def test_full_parse_produces_all_sections(self, parser):

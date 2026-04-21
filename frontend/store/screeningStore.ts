@@ -43,7 +43,7 @@ interface ScreeningState {
 
   // Configuration
   semanticWeight: number;
-  setSemantic Weight: (weight: number) => void;
+  setSemanticWeight: (weight: number) => void;
   embeddingModel: string;
   setEmbeddingModel: (model: string) => void;
   includeFairness: boolean;
@@ -150,7 +150,7 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
 
     } catch (error) {
       console.error('Processing error:', error);
-      alert(`Error processing resumes: ${error.message}`);
+      alert(`Error processing resumes: ${error instanceof Error ? error.message : String(error)}`);
       set({ isProcessing: false, progress: 0 });
     }
   },

@@ -38,8 +38,7 @@ class VectorStoreManager:
             import faiss  # noqa: F401 – validate availability at init time
         except ImportError as exc:
             raise ImportError(
-                "faiss-cpu is required for VectorStoreManager. "
-                "Install it with: pip install faiss-cpu"
+                "faiss-cpu is required for VectorStoreManager. " "Install it with: pip install faiss-cpu"
             ) from exc
 
         self.dimension = dimension
@@ -102,9 +101,7 @@ class VectorStoreManager:
         # Check for duplicate IDs
         duplicates = [doc_id for doc_id in ids if doc_id in self._reverse_id_map]
         if duplicates:
-            raise ValueError(
-                f"Duplicate IDs detected (already in index): {duplicates}"
-            )
+            raise ValueError(f"Duplicate IDs detected (already in index): {duplicates}")
 
         # Assign sequential FAISS integer IDs
         start_idx = self._index.ntotal
@@ -118,9 +115,7 @@ class VectorStoreManager:
         # Add to index (FAISS expects float32 C-contiguous array)
         self._index.add(embeddings)
 
-        logger.info(
-            "Added %d vectors to index (total: %d)", len(ids), self._index.ntotal
-        )
+        logger.info("Added %d vectors to index (total: %d)", len(ids), self._index.ntotal)
 
     def search(
         self,
@@ -188,11 +183,7 @@ class VectorStoreManager:
 
         # Collect all vectors except the one to remove
         faiss_id_to_remove = self._reverse_id_map[doc_id]
-        remaining_ids = [
-            (fid, did)
-            for fid, did in self._id_map.items()
-            if fid != faiss_id_to_remove
-        ]
+        remaining_ids = [(fid, did) for fid, did in self._id_map.items() if fid != faiss_id_to_remove]
 
         if not remaining_ids:
             # Nothing left – reset to empty index
@@ -205,9 +196,11 @@ class VectorStoreManager:
         # Reconstruct index from remaining vectors
         import faiss
 
-        all_vectors = faiss.rev_swig_ptr(
-            self._index.get_xb(), self._index.ntotal * self.dimension
-        ).reshape(self._index.ntotal, self.dimension).copy()
+        all_vectors = (
+            faiss.rev_swig_ptr(self._index.get_xb(), self._index.ntotal * self.dimension)
+            .reshape(self._index.ntotal, self.dimension)
+            .copy()
+        )
 
         remaining_faiss_ids = [fid for fid, _ in remaining_ids]
         remaining_doc_ids = [did for _, did in remaining_ids]
@@ -217,10 +210,7 @@ class VectorStoreManager:
         new_index.add(remaining_vectors)
 
         self._index = new_index
-        self._id_map = {
-            new_fid: did
-            for new_fid, did in enumerate(remaining_doc_ids)
-        }
+        self._id_map = {new_fid: did for new_fid, did in enumerate(remaining_doc_ids)}
         self._reverse_id_map = {did: new_fid for new_fid, did in self._id_map.items()}
 
         logger.info("Removed vector for ID '%s'; index size now %d", doc_id, self._index.ntotal)
@@ -241,9 +231,9 @@ class VectorStoreManager:
         import faiss
 
         faiss_id = self._reverse_id_map[doc_id]
-        all_vectors = faiss.rev_swig_ptr(
-            self._index.get_xb(), self._index.ntotal * self.dimension
-        ).reshape(self._index.ntotal, self.dimension)
+        all_vectors = faiss.rev_swig_ptr(self._index.get_xb(), self._index.ntotal * self.dimension).reshape(
+            self._index.ntotal, self.dimension
+        )
 
         return all_vectors[faiss_id].copy()
 
@@ -290,9 +280,7 @@ class VectorStoreManager:
         with open(meta_path, "w", encoding="utf-8") as fh:
             json.dump(metadata, fh, indent=2)
 
-        logger.info(
-            "Index saved to '%s' (%d vectors)", index_path, self._index.ntotal
-        )
+        logger.info("Index saved to '%s' (%d vectors)", index_path, self._index.ntotal)
 
     def load_index(self, path: str) -> None:
         """Load a previously saved FAISS index and metadata from disk.
@@ -329,9 +317,7 @@ class VectorStoreManager:
         self._id_map = {int(k): v for k, v in metadata["id_map"].items()}
         self._reverse_id_map = {v: int(k) for k, v in metadata["id_map"].items()}
 
-        logger.info(
-            "Index loaded from '%s' (%d vectors)", index_path, self._index.ntotal
-        )
+        logger.info("Index loaded from '%s' (%d vectors)", index_path, self._index.ntotal)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -360,21 +346,13 @@ class VectorStoreManager:
             embeddings = embeddings.reshape(1, -1)
 
         if embeddings.ndim != 2:
-            raise ValueError(
-                f"embeddings must be 1-D or 2-D, got shape {embeddings.shape}"
-            )
+            raise ValueError(f"embeddings must be 1-D or 2-D, got shape {embeddings.shape}")
 
         if embeddings.shape[1] != self.dimension:
-            raise ValueError(
-                f"Embedding dimension mismatch: expected {self.dimension}, "
-                f"got {embeddings.shape[1]}"
-            )
+            raise ValueError(f"Embedding dimension mismatch: expected {self.dimension}, " f"got {embeddings.shape[1]}")
 
         if expected_n is not None and embeddings.shape[0] != expected_n:
-            raise ValueError(
-                f"Number of embeddings ({embeddings.shape[0]}) does not match "
-                f"number of IDs ({expected_n})"
-            )
+            raise ValueError(f"Number of embeddings ({embeddings.shape[0]}) does not match " f"number of IDs ({expected_n})")
 
         # L2-normalise each row so inner product == cosine similarity
         norms = np.linalg.norm(embeddings, axis=1, keepdims=True)

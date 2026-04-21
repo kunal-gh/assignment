@@ -54,9 +54,7 @@ class SimilaritySearchEngine:
             model_name: Sentence-transformer model to use when creating a
                 default generator.
         """
-        self.embedding_generator = embedding_generator or EmbeddingGenerator(
-            model_name=model_name
-        )
+        self.embedding_generator = embedding_generator or EmbeddingGenerator(model_name=model_name)
         logger.info(
             "SimilaritySearchEngine initialised (model=%s)",
             self.embedding_generator.model_name,
@@ -181,9 +179,7 @@ class SimilaritySearchEngine:
     def _get_job_embedding(self, job_description: JobDescription) -> np.ndarray:
         """Return (and cache on the object) the job-description embedding."""
         if job_description.embedding is None:
-            job_description.embedding = self.embedding_generator.encode_job_description(
-                job_description
-            )
+            job_description.embedding = self.embedding_generator.encode_job_description(job_description)
         return job_description.embedding
 
     def _ensure_resume_embeddings(self, resumes: List[ResumeData]) -> None:

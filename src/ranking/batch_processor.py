@@ -61,12 +61,8 @@ class BatchProcessor:
             raise ValueError(f"chunk_size must be a positive integer, got {chunk_size}")
 
         self.chunk_size = chunk_size
-        self.embedding_generator = embedding_generator or EmbeddingGenerator(
-            model_name=model_name
-        )
-        self._search_engine = SimilaritySearchEngine(
-            embedding_generator=self.embedding_generator
-        )
+        self.embedding_generator = embedding_generator or EmbeddingGenerator(model_name=model_name)
+        self._search_engine = SimilaritySearchEngine(embedding_generator=self.embedding_generator)
 
         logger.info(
             "BatchProcessor initialised (model=%s, chunk_size=%d)",
@@ -222,18 +218,14 @@ class BatchProcessor:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _split_into_chunks(
-        items: List, chunk_size: int
-    ) -> List[List]:
+    def _split_into_chunks(items: List, chunk_size: int) -> List[List]:
         """Split *items* into consecutive sub-lists of at most *chunk_size*."""
         return [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
 
     def _get_job_embedding(self, job_description: JobDescription) -> np.ndarray:
         """Return (and cache on the object) the job-description embedding."""
         if job_description.embedding is None:
-            job_description.embedding = self.embedding_generator.encode_job_description(
-                job_description
-            )
+            job_description.embedding = self.embedding_generator.encode_job_description(job_description)
         return job_description.embedding
 
     def _process_chunk(
@@ -267,9 +259,7 @@ class BatchProcessor:
                 for resume in missing:
                     if resume.embedding is None:
                         try:
-                            resume.embedding = self.embedding_generator.encode_resume(
-                                resume
-                            )
+                            resume.embedding = self.embedding_generator.encode_resume(resume)
                         except Exception as inner_exc:
                             logger.error(
                                 "Chunk %d: individual embedding failed for '%s': %s",

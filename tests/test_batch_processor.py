@@ -413,9 +413,9 @@ class TestGenerateBatchEmbeddings:
         proc = BatchProcessor(embedding_generator=gen, chunk_size=10)
         resumes = [
             _make_resume("r0", _unit_vec(0)),  # already has embedding
-            _make_resume("r1"),                 # missing
+            _make_resume("r1"),  # missing
             _make_resume("r2", _unit_vec(2)),  # already has embedding
-            _make_resume("r3"),                 # missing
+            _make_resume("r3"),  # missing
         ]
         count = proc.generate_batch_embeddings(resumes)
         assert count == 2

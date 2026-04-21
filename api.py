@@ -51,6 +51,7 @@ limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
@@ -60,11 +61,13 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
+
 # In-memory job store (replace with Redis/DB in production)
 _job_store: Dict[str, Any] = {}
 
 # Security setup
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     # In a real app, decode JWT and verify against DB
@@ -76,7 +79,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         )
     return {"user_id": "admin"}
 
+
 # ─── Pydantic Models ──────────────────────────────────────────────────────────
+
 
 class JobDescriptionRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=200, description="Job title")
@@ -143,8 +148,7 @@ def get_parser() -> ResumeParser:
     return _parser_cache
 
 
-def get_engine(semantic_weight: float = 0.7, skill_weight: float = 0.3,
-               model_name: str = "all-MiniLM-L6-v2") -> RankingEngine:
+def get_engine(semantic_weight: float = 0.7, skill_weight: float = 0.3, model_name: str = "all-MiniLM-L6-v2") -> RankingEngine:
     key = f"{model_name}_{semantic_weight}_{skill_weight}"
     if key not in _engine_cache:
         generator = EmbeddingGenerator(model_name=model_name)
@@ -158,6 +162,7 @@ def get_engine(semantic_weight: float = 0.7, skill_weight: float = 0.3,
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
+
 @app.post("/token", tags=["Auth"])
 @limiter.limit("5/minute")
 async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
@@ -170,6 +175,7 @@ async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequ
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 @limiter.limit("60/minute")
 async def health_check(request: Request):
@@ -180,11 +186,13 @@ async def health_check(request: Request):
         timestamp=datetime.utcnow().isoformat(),
     )
 
+
 @app.get("/", tags=["System"])
 @limiter.limit("60/minute")
 async def root(request: Request):
     """API root — redirects to docs."""
     return {"message": "AI Resume Screener API", "docs": "/docs", "version": "1.0.0"}
+
 
 @app.post("/screen", response_model=ScreeningResult, tags=["Screening"])
 @limiter.limit("10/minute")
@@ -196,7 +204,7 @@ async def screen_resumes(
     semantic_weight: float = 0.7,
     include_fairness: bool = True,
     embedding_model: str = "all-MiniLM-L6-v2",
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Upload resumes and screen them against a job description.
@@ -216,8 +224,7 @@ async def screen_resumes(
     for upload in files:
         if not upload.filename.lower().endswith((".pdf", ".docx")):
             raise HTTPException(
-                status_code=400,
-                detail=f"Unsupported file type: {upload.filename}. Only PDF and DOCX accepted."
+                status_code=400, detail=f"Unsupported file type: {upload.filename}. Only PDF and DOCX accepted."
             )
         dest = os.path.join(temp_dir, upload.filename)
         content = await upload.read()
@@ -232,9 +239,7 @@ async def screen_resumes(
         job_desc = JobDescription(title=job_title, description=job_description)
         resumes = parser.batch_parse(file_paths)
 
-        batch_result = engine.process_batch(
-            resumes, job_desc, include_fairness=include_fairness
-        )
+        batch_result = engine.process_batch(resumes, job_desc, include_fairness=include_fairness)
 
         # Build response
         candidates_out = []
@@ -246,6 +251,7 @@ async def screen_resumes(
             # Get skill analysis
             try:
                 from src.ranking.skill_matcher import SkillMatcher
+
                 matcher = SkillMatcher()
                 analysis = matcher.analyze_skill_match(
                     resume.skills,
@@ -257,18 +263,20 @@ async def screen_resumes(
             except Exception:
                 matched, missing = [], []
 
-            candidates_out.append(CandidateResult(
-                rank=c.rank,
-                name=name,
-                email=email,
-                hybrid_score=round(c.hybrid_score, 4),
-                semantic_score=round(c.semantic_score, 4),
-                skill_score=round(c.skill_score, 4),
-                matched_skills=matched[:10],
-                missing_skills=missing[:10],
-                years_experience=resume.get_years_of_experience(),
-                explanation=c.explanation,
-            ))
+            candidates_out.append(
+                CandidateResult(
+                    rank=c.rank,
+                    name=name,
+                    email=email,
+                    hybrid_score=round(c.hybrid_score, 4),
+                    semantic_score=round(c.semantic_score, 4),
+                    skill_score=round(c.skill_score, 4),
+                    matched_skills=matched[:10],
+                    missing_skills=missing[:10],
+                    years_experience=resume.get_years_of_experience(),
+                    explanation=c.explanation,
+                )
+            )
 
         # Fairness summary
         fairness_summary = None
@@ -329,18 +337,20 @@ async def export_csv(request: Request, job_id: str):
 
     rows = []
     for c in candidates:
-        rows.append({
-            "Rank": c["rank"],
-            "Name": c["name"],
-            "Email": c["email"] or "",
-            "Overall Score (%)": round(c["hybrid_score"] * 100, 1),
-            "Semantic Score (%)": round(c["semantic_score"] * 100, 1),
-            "Skill Score (%)": round(c["skill_score"] * 100, 1),
-            "Years Experience": c["years_experience"],
-            "Matched Skills": ", ".join(c["matched_skills"]),
-            "Missing Skills": ", ".join(c["missing_skills"]),
-            "Explanation": c["explanation"] or "",
-        })
+        rows.append(
+            {
+                "Rank": c["rank"],
+                "Name": c["name"],
+                "Email": c["email"] or "",
+                "Overall Score (%)": round(c["hybrid_score"] * 100, 1),
+                "Semantic Score (%)": round(c["semantic_score"] * 100, 1),
+                "Skill Score (%)": round(c["skill_score"] * 100, 1),
+                "Years Experience": c["years_experience"],
+                "Matched Skills": ", ".join(c["matched_skills"]),
+                "Missing Skills": ", ".join(c["missing_skills"]),
+                "Explanation": c["explanation"] or "",
+            }
+        )
 
     df = pd.DataFrame(rows)
     csv_buf = io.StringIO()
@@ -377,10 +387,7 @@ async def analyze_job_description(request: Request, body: JobDescriptionRequest)
         "experience_level": job_desc.experience_level,
         "skill_count": len(job_desc.required_skills),
         "description_length": len(job_desc.description),
-        "tip": (
-            "The more specific your job description, "
-            "the better the semantic matching will perform."
-        ),
+        "tip": ("The more specific your job description, " "the better the semantic matching will perform."),
     }
 
 

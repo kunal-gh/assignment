@@ -69,10 +69,7 @@ class TestSkillMatcherPerformance:
         """Skill matching for 50 resumes must complete under 2 seconds."""
         required = ["python", "pytorch", "fastapi", "docker"]
 
-        resumes = [
-            [f"python", f"skill_{i}", f"tool_{i}", "git"]
-            for i in range(50)
-        ]
+        resumes = [[f"python", f"skill_{i}", f"tool_{i}", "git"] for i in range(50)]
 
         start = time.perf_counter()
         scores = [self.matcher.calculate_skill_match(r, required) for r in resumes]
@@ -90,9 +87,7 @@ class TestNormalisationPerformance:
 
     def test_normalise_large_skill_list_under_100ms(self):
         """Normalising 100 skills must be near-instant."""
-        skills = [f"skill_{i}" for i in range(80)] + [
-            "js", "nodejs", "postgres", "k8s", "tensorflow", "pytorch"
-        ]
+        skills = [f"skill_{i}" for i in range(80)] + ["js", "nodejs", "postgres", "k8s", "tensorflow", "pytorch"]
 
         start = time.perf_counter()
         for _ in range(200):
@@ -111,10 +106,7 @@ class TestFairnessCheckerPerformance:
 
     def test_fairness_report_20_candidates_under_1s(self):
         """Fairness report for 20 candidates under 1 second."""
-        candidates = [
-            _make_resume(f"Candidate {i}", ["python", "docker"], float(i) / 20)
-            for i in range(20)
-        ]
+        candidates = [_make_resume(f"Candidate {i}", ["python", "docker"], float(i) / 20) for i in range(20)]
 
         start = time.perf_counter()
         for _ in range(10):
@@ -126,10 +118,7 @@ class TestFairnessCheckerPerformance:
 
     def test_fairness_metrics_50_candidates_under_2s(self):
         """Fairness metrics for 50 candidates under 2 seconds."""
-        candidates = [
-            _make_resume(f"Person {i}", ["python"], float(i) / 50)
-            for i in range(50)
-        ]
+        candidates = [_make_resume(f"Person {i}", ["python"], float(i) / 50) for i in range(50)]
 
         start = time.perf_counter()
         self.checker.calculate_fairness_metrics(candidates)
@@ -144,6 +133,7 @@ class TestEvaluationMetricsPerformance:
     def test_10000_ndcg_computations_under_3s(self):
         """10,000 NDCG computations must complete in under 3 seconds."""
         from src.utils.evaluation import RankingEvaluator
+
         evaluator = RankingEvaluator()
         labels = [1, 0, 1, 1, 0, 1, 0, 0, 1, 0]
 

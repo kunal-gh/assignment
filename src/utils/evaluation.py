@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EvaluationResult:
     """Container for evaluation metric results."""
+
     precision_at_k: Dict[int, float] = field(default_factory=dict)
     recall_at_k: Dict[int, float] = field(default_factory=dict)
     ndcg_at_k: Dict[int, float] = field(default_factory=dict)
@@ -221,21 +222,21 @@ class HiddenGemDetector:
         """
         gems = []
         for candidate in candidates:
-            if (candidate.semantic_score >= self.semantic_threshold
-                    and candidate.skill_score < self.keyword_threshold):
-                gems.append({
-                    "name": (candidate.resume.contact_info.name
-                             if candidate.resume.contact_info else "Unknown"),
-                    "rank": candidate.rank,
-                    "semantic_score": round(candidate.semantic_score, 3),
-                    "skill_score": round(candidate.skill_score, 3),
-                    "hybrid_score": round(candidate.hybrid_score, 3),
-                    "score_gap": round(candidate.semantic_score - candidate.skill_score, 3),
-                    "insight": (
-                        f"Semantic score ({candidate.semantic_score:.1%}) is "
-                        f"{candidate.semantic_score - candidate.skill_score:.1%} higher than "
-                        f"skill-match ({candidate.skill_score:.1%}). May be a hidden gem — "
-                        "review resume manually."
-                    ),
-                })
+            if candidate.semantic_score >= self.semantic_threshold and candidate.skill_score < self.keyword_threshold:
+                gems.append(
+                    {
+                        "name": (candidate.resume.contact_info.name if candidate.resume.contact_info else "Unknown"),
+                        "rank": candidate.rank,
+                        "semantic_score": round(candidate.semantic_score, 3),
+                        "skill_score": round(candidate.skill_score, 3),
+                        "hybrid_score": round(candidate.hybrid_score, 3),
+                        "score_gap": round(candidate.semantic_score - candidate.skill_score, 3),
+                        "insight": (
+                            f"Semantic score ({candidate.semantic_score:.1%}) is "
+                            f"{candidate.semantic_score - candidate.skill_score:.1%} higher than "
+                            f"skill-match ({candidate.skill_score:.1%}). May be a hidden gem — "
+                            "review resume manually."
+                        ),
+                    }
+                )
         return sorted(gems, key=lambda g: g["score_gap"], reverse=True)

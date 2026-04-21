@@ -7,8 +7,7 @@ from src.models.resume import ContactInfo, ResumeData
 from src.ranking.fairness_checker import FairnessChecker
 
 
-def _make_candidate(name: str, score: float, rank: int, years_exp: int = 3,
-                    skills: list = None) -> RankedCandidate:
+def _make_candidate(name: str, score: float, rank: int, years_exp: int = 3, skills: list = None) -> RankedCandidate:
     """Helper — build a RankedCandidate with minimal data."""
     contact = ContactInfo(name=name, email=f"{name.lower().replace(' ', '.')}@test.com")
     resume = ResumeData(
@@ -56,8 +55,7 @@ class TestFairnessReportGeneration:
         assert report.total_candidates == 1
 
     def test_report_contains_all_fields(self):
-        candidates = [_make_candidate(f"Person {i}", float(1 - i * 0.1), i + 1)
-                      for i in range(5)]
+        candidates = [_make_candidate(f"Person {i}", float(1 - i * 0.1), i + 1) for i in range(5)]
         report = self.checker.generate_fairness_report(candidates, top_k=3)
         assert hasattr(report, "bias_flags")
         assert hasattr(report, "recommendations")
@@ -71,8 +69,7 @@ class TestFairnessReportGeneration:
         assert report.total_candidates == 3
 
     def test_overall_fairness_score_in_range(self):
-        candidates = [_make_candidate(f"Candidate {i}", float(i + 1) / 10.0, i + 1)
-                      for i in range(10)]
+        candidates = [_make_candidate(f"Candidate {i}", float(i + 1) / 10.0, i + 1) for i in range(10)]
         report = self.checker.generate_fairness_report(candidates, top_k=5)
         score = report.get_overall_fairness_score()
         assert 0.0 <= score <= 1.0

@@ -13,6 +13,7 @@ from src.ranking.skill_matcher import SkillMatcher
 
 # ─── Resume fixtures ──────────────────────────────────────────────────────────
 
+
 @pytest.fixture(scope="session")
 def skill_matcher():
     """Shared SkillMatcher instance (session-scoped for speed)."""
@@ -48,9 +49,21 @@ def strong_ml_resume():
     return ResumeData(
         contact_info=contact,
         skills=[
-            "python", "pytorch", "tensorflow", "spacy", "nltk",
-            "hugging face", "faiss", "fastapi", "docker", "kubernetes",
-            "aws", "git", "streamlit", "sentence-transformers", "scikit-learn",
+            "python",
+            "pytorch",
+            "tensorflow",
+            "spacy",
+            "nltk",
+            "hugging face",
+            "faiss",
+            "fastapi",
+            "docker",
+            "kubernetes",
+            "aws",
+            "git",
+            "streamlit",
+            "sentence-transformers",
+            "scikit-learn",
         ],
         raw_text="Senior ML Engineer with 6 years NLP experience. Built semantic search and resume screening systems.",
         embedding=np.ones(384, dtype=np.float32) * 0.95,
@@ -84,6 +97,7 @@ def sample_job_description():
 
 # ─── Candidate fixtures ───────────────────────────────────────────────────────
 
+
 @pytest.fixture
 def sample_ranked_candidate(strong_ml_resume):
     return RankedCandidate(
@@ -100,13 +114,16 @@ def sample_ranked_candidate(strong_ml_resume):
 def ranked_candidates_list(strong_ml_resume, weak_resume):
     """List of 5 ranked candidates from strong to weak."""
     candidates = []
-    for i, (name, score) in enumerate([
-        ("Priya ML", 0.88),
-        ("Alex Mid", 0.70),
-        ("Chris OK", 0.55),
-        ("Dana Low", 0.35),
-        ("Eric Weak", 0.15),
-    ], start=1):
+    for i, (name, score) in enumerate(
+        [
+            ("Priya ML", 0.88),
+            ("Alex Mid", 0.70),
+            ("Chris OK", 0.55),
+            ("Dana Low", 0.35),
+            ("Eric Weak", 0.15),
+        ],
+        start=1,
+    ):
         contact = ContactInfo(name=name, email=f"{name.lower().replace(' ', '.')}@test.com")
         resume = ResumeData(
             contact_info=contact,
@@ -114,17 +131,20 @@ def ranked_candidates_list(strong_ml_resume, weak_resume):
             raw_text=f"Resume of {name}",
             embedding=np.ones(384) * score,
         )
-        candidates.append(RankedCandidate(
-            resume=resume,
-            semantic_score=score,
-            skill_score=score * 0.9,
-            hybrid_score=score,
-            rank=i,
-        ))
+        candidates.append(
+            RankedCandidate(
+                resume=resume,
+                semantic_score=score,
+                skill_score=score * 0.9,
+                hybrid_score=score,
+                rank=i,
+            )
+        )
     return candidates
 
 
 # ─── Numpy fixtures ───────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def unit_vector():

@@ -78,12 +78,26 @@ def sample_job_description():
 def mock_resume_strong():
     """Strong candidate resume with good ML skills."""
     from src.models.resume import ContactInfo, ResumeData
+
     contact = ContactInfo(name="Dr. Sarah Connor", email="sarah.connor@ml.io")
     resume = ResumeData(
         contact_info=contact,
-        skills=["python", "pytorch", "tensorflow", "spacy", "nltk",
-                "hugging face", "faiss", "fastapi", "docker", "kubernetes",
-                "aws", "git", "streamlit", "sentence-transformers"],
+        skills=[
+            "python",
+            "pytorch",
+            "tensorflow",
+            "spacy",
+            "nltk",
+            "hugging face",
+            "faiss",
+            "fastapi",
+            "docker",
+            "kubernetes",
+            "aws",
+            "git",
+            "streamlit",
+            "sentence-transformers",
+        ],
         raw_text=SAMPLE_RESUME_STRONG,
     )
     resume.embedding = np.random.rand(384).astype(np.float32)
@@ -94,6 +108,7 @@ def mock_resume_strong():
 def mock_resume_weak():
     """Weak candidate resume with irrelevant skills."""
     from src.models.resume import ContactInfo, ResumeData
+
     contact = ContactInfo(name="Bob Smith", email="bob@example.com")
     resume = ResumeData(
         contact_info=contact,
@@ -129,6 +144,7 @@ def ranking_engine():
 
 # ─── End-to-End Tests ────────────────────────────────────────────────────────
 
+
 class TestEndToEndPipeline:
     """End-to-end pipeline integration tests."""
 
@@ -138,9 +154,7 @@ class TestEndToEndPipeline:
         """Strong candidate should outrank weak candidate."""
         sample_job_description.embedding = np.ones(384, dtype=np.float32)
 
-        results = ranking_engine.rank_candidates(
-            [mock_resume_weak, mock_resume_strong], sample_job_description
-        )
+        results = ranking_engine.rank_candidates([mock_resume_weak, mock_resume_strong], sample_job_description)
 
         assert len(results) == 2
         # Strong candidate (Sarah Connor) should be rank 1
@@ -148,33 +162,22 @@ class TestEndToEndPipeline:
         assert results[1].resume.contact_info.name == "Bob Smith"
         assert results[0].hybrid_score > results[1].hybrid_score
 
-    def test_scores_in_valid_range(
-        self, ranking_engine, mock_resume_strong, mock_resume_weak, sample_job_description
-    ):
+    def test_scores_in_valid_range(self, ranking_engine, mock_resume_strong, mock_resume_weak, sample_job_description):
         """All scores must be in [0, 1] range."""
         sample_job_description.embedding = np.ones(384, dtype=np.float32)
 
-        results = ranking_engine.rank_candidates(
-            [mock_resume_strong, mock_resume_weak], sample_job_description
-        )
+        results = ranking_engine.rank_candidates([mock_resume_strong, mock_resume_weak], sample_job_description)
 
         for candidate in results:
-            assert 0.0 <= candidate.hybrid_score <= 1.0, \
-                f"Hybrid score {candidate.hybrid_score} out of range"
-            assert 0.0 <= candidate.semantic_score <= 1.0, \
-                f"Semantic score {candidate.semantic_score} out of range"
-            assert 0.0 <= candidate.skill_score <= 1.0, \
-                f"Skill score {candidate.skill_score} out of range"
+            assert 0.0 <= candidate.hybrid_score <= 1.0, f"Hybrid score {candidate.hybrid_score} out of range"
+            assert 0.0 <= candidate.semantic_score <= 1.0, f"Semantic score {candidate.semantic_score} out of range"
+            assert 0.0 <= candidate.skill_score <= 1.0, f"Skill score {candidate.skill_score} out of range"
 
-    def test_ranks_are_sequential(
-        self, ranking_engine, mock_resume_strong, mock_resume_weak, sample_job_description
-    ):
+    def test_ranks_are_sequential(self, ranking_engine, mock_resume_strong, mock_resume_weak, sample_job_description):
         """Ranks must be 1, 2, 3, ... with no gaps."""
         sample_job_description.embedding = np.ones(384, dtype=np.float32)
 
-        results = ranking_engine.rank_candidates(
-            [mock_resume_strong, mock_resume_weak], sample_job_description
-        )
+        results = ranking_engine.rank_candidates([mock_resume_strong, mock_resume_weak], sample_job_description)
 
         ranks = [c.rank for c in results]
         assert ranks == list(range(1, len(results) + 1))
@@ -202,27 +205,19 @@ class TestEndToEndPipeline:
         results = ranking_engine.rank_candidates([], sample_job_description)
         assert results == []
 
-    def test_single_resume(
-        self, ranking_engine, mock_resume_strong, sample_job_description
-    ):
+    def test_single_resume(self, ranking_engine, mock_resume_strong, sample_job_description):
         """Single resume should work and get rank 1."""
         sample_job_description.embedding = np.ones(384, dtype=np.float32)
         results = ranking_engine.rank_candidates([mock_resume_strong], sample_job_description)
         assert len(results) == 1
         assert results[0].rank == 1
 
-    def test_ranking_consistency(
-        self, ranking_engine, mock_resume_strong, mock_resume_weak, sample_job_description
-    ):
+    def test_ranking_consistency(self, ranking_engine, mock_resume_strong, mock_resume_weak, sample_job_description):
         """Ranking must be deterministic — same input same output."""
         sample_job_description.embedding = np.ones(384, dtype=np.float32)
 
-        results1 = ranking_engine.rank_candidates(
-            [mock_resume_strong, mock_resume_weak], sample_job_description
-        )
-        results2 = ranking_engine.rank_candidates(
-            [mock_resume_strong, mock_resume_weak], sample_job_description
-        )
+        results1 = ranking_engine.rank_candidates([mock_resume_strong, mock_resume_weak], sample_job_description)
+        results2 = ranking_engine.rank_candidates([mock_resume_strong, mock_resume_weak], sample_job_description)
 
         assert [c.rank for c in results1] == [c.rank for c in results2]
         for r1, r2 in zip(results1, results2):
@@ -238,15 +233,9 @@ class TestSkillMatchingIntegration:
 
         required = ["python", "fastapi", "docker", "kubernetes"]
 
-        score_full = matcher.calculate_skill_match(
-            ["python", "fastapi", "docker", "kubernetes"], required
-        )
-        score_half = matcher.calculate_skill_match(
-            ["python", "fastapi"], required
-        )
-        score_none = matcher.calculate_skill_match(
-            ["java", "spring", "maven"], required
-        )
+        score_full = matcher.calculate_skill_match(["python", "fastapi", "docker", "kubernetes"], required)
+        score_half = matcher.calculate_skill_match(["python", "fastapi"], required)
+        score_none = matcher.calculate_skill_match(["java", "spring", "maven"], required)
 
         assert score_full > score_half > score_none
         assert score_none == pytest.approx(0.0, abs=0.01)
@@ -280,6 +269,7 @@ class TestFairnessIntegration:
     def _make_candidate(self, name: str, score: float, rank: int) -> RankedCandidate:
         """Helper to create a mock candidate."""
         from src.models.resume import ContactInfo, ResumeData
+
         contact = ContactInfo(name=name, email=f"{name.lower().replace(' ', '.')}@test.com")
         resume = ResumeData(contact_info=contact, skills=[], raw_text="")
         candidate = RankedCandidate(
@@ -311,10 +301,7 @@ class TestFairnessIntegration:
     def test_fairness_score_in_range(self):
         """Overall fairness score must be in [0, 1]."""
         checker = FairnessChecker()
-        candidates = [
-            self._make_candidate(f"Candidate {i}", float(1.0 - i * 0.1), i + 1)
-            for i in range(8)
-        ]
+        candidates = [self._make_candidate(f"Candidate {i}", float(1.0 - i * 0.1), i + 1) for i in range(8)]
 
         report = checker.generate_fairness_report(candidates, top_k=4)
         score = report.get_overall_fairness_score()

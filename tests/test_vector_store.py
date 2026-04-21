@@ -201,9 +201,7 @@ class TestPersistence:
             vsm2.load_index(base)
             loaded_results = vsm2.search(query, k=3)
 
-        assert [doc_id for doc_id, _ in original_results] == [
-            doc_id for doc_id, _ in loaded_results
-        ]
+        assert [doc_id for doc_id, _ in original_results] == [doc_id for doc_id, _ in loaded_results]
 
     def test_load_missing_index_raises(self):
         vsm = VectorStoreManager(dimension=DIM)

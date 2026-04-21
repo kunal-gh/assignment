@@ -14,6 +14,7 @@ from src.embeddings.cache_manager import CacheManager
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def make_embedding(dim: int = 8, seed: int = 0) -> np.ndarray:
     rng = np.random.default_rng(seed)
     return rng.random(dim).astype(np.float32)
@@ -22,6 +23,7 @@ def make_embedding(dim: int = 8, seed: int = 0) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def cache(tmp_path):
@@ -37,6 +39,7 @@ def embedding():
 # ---------------------------------------------------------------------------
 # Initialisation
 # ---------------------------------------------------------------------------
+
 
 class TestInit:
     def test_creates_cache_dir(self, tmp_path):
@@ -63,6 +66,7 @@ class TestInit:
 # ---------------------------------------------------------------------------
 # Memory cache
 # ---------------------------------------------------------------------------
+
 
 class TestMemoryCache:
     def test_store_and_retrieve(self, cache, embedding):
@@ -110,6 +114,7 @@ class TestMemoryCache:
 # Disk cache
 # ---------------------------------------------------------------------------
 
+
 class TestDiskCache:
     def test_disk_file_created(self, tmp_path, embedding):
         cm = CacheManager(cache_dir=str(tmp_path))
@@ -154,6 +159,7 @@ class TestDiskCache:
 # ---------------------------------------------------------------------------
 # Cache invalidation
 # ---------------------------------------------------------------------------
+
 
 class TestCacheInvalidation:
     def test_clear_cache_empties_memory(self, cache, embedding):
@@ -200,6 +206,7 @@ class TestCacheInvalidation:
 # Serialisation helpers
 # ---------------------------------------------------------------------------
 
+
 class TestSerialization:
     def test_roundtrip_float32(self):
         arr = make_embedding(dim=384)
@@ -229,6 +236,7 @@ class TestSerialization:
 # ---------------------------------------------------------------------------
 # Redis integration (mocked)
 # ---------------------------------------------------------------------------
+
 
 class TestRedisIntegration:
     """Tests for Redis layer using a mock Redis client."""
@@ -340,6 +348,7 @@ class TestRedisIntegration:
 # get_stats completeness
 # ---------------------------------------------------------------------------
 
+
 class TestGetStats:
     def test_stats_structure(self, cache, embedding):
         cache.store_embedding("k", embedding)
@@ -351,8 +360,8 @@ class TestGetStats:
 
     def test_hit_rate_calculation(self, cache, embedding):
         cache.store_embedding("k", embedding)
-        cache.get_embedding("k")   # hit
-        cache.get_embedding("x")   # miss
+        cache.get_embedding("k")  # hit
+        cache.get_embedding("x")  # miss
         stats = cache.get_stats()["statistics"]
         assert stats["hit_rate_percent"] == 50.0
 

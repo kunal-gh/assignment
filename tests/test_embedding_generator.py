@@ -11,6 +11,7 @@ from src.models.resume import ContactInfo, Education, Experience, ResumeData
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def generator():
     """Module-scoped generator to avoid reloading the model for every test."""
@@ -97,6 +98,7 @@ def sample_resumes():
 # Initialisation
 # ---------------------------------------------------------------------------
 
+
 class TestInitialisation:
     def test_generator_initialises(self, generator):
         assert generator is not None
@@ -105,8 +107,15 @@ class TestInitialisation:
 
     def test_model_info_keys(self, generator):
         info = generator.get_model_info()
-        for key in ("model_name", "embedding_dimension", "max_sequence_length",
-                    "cache_enabled", "model_loaded", "chunk_size", "chunk_overlap"):
+        for key in (
+            "model_name",
+            "embedding_dimension",
+            "max_sequence_length",
+            "cache_enabled",
+            "model_loaded",
+            "chunk_size",
+            "chunk_overlap",
+        ):
             assert key in info
         assert info["model_loaded"] is True
 
@@ -114,6 +123,7 @@ class TestInitialisation:
 # ---------------------------------------------------------------------------
 # Text preprocessing
 # ---------------------------------------------------------------------------
+
 
 class TestPreprocessText:
     def test_strips_whitespace(self, generator):
@@ -143,6 +153,7 @@ class TestPreprocessText:
 # ---------------------------------------------------------------------------
 # Resume text construction
 # ---------------------------------------------------------------------------
+
 
 class TestBuildResumeText:
     def test_includes_skills(self, generator, simple_resume):
@@ -190,6 +201,7 @@ class TestBuildResumeText:
 # Chunking
 # ---------------------------------------------------------------------------
 
+
 class TestChunking:
     def test_short_text_not_chunked(self, generator):
         text = "short text"
@@ -210,8 +222,8 @@ class TestChunking:
         chunks = generator._chunk_text(text)
         if len(chunks) >= 2:
             # Last words of chunk 0 should appear at start of chunk 1
-            end_of_first = chunks[0].split()[-generator.chunk_overlap:]
-            start_of_second = chunks[1].split()[:generator.chunk_overlap]
+            end_of_first = chunks[0].split()[-generator.chunk_overlap :]
+            start_of_second = chunks[1].split()[: generator.chunk_overlap]
             assert end_of_first == start_of_second
 
     def test_all_words_covered(self, generator):
@@ -229,6 +241,7 @@ class TestChunking:
 # ---------------------------------------------------------------------------
 # Embedding generation
 # ---------------------------------------------------------------------------
+
 
 class TestEncodeText:
     def test_returns_numpy_array(self, generator):
@@ -588,6 +601,7 @@ class TestJobDescriptionEmbeddingCaching:
 # Batch encoding
 # ---------------------------------------------------------------------------
 
+
 class TestBatchEncode:
     def test_correct_shape(self, generator):
         texts = ["First sentence", "Second sentence", "Third sentence"]
@@ -616,6 +630,7 @@ class TestBatchEncode:
 # ---------------------------------------------------------------------------
 # Cosine similarity
 # ---------------------------------------------------------------------------
+
 
 class TestCosineSimilarity:
     def test_identical_vectors_return_one(self, generator):

@@ -19,6 +19,7 @@ from src.parsers.skill_extractor import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def extractor():
     return SkillExtractor()
@@ -77,6 +78,7 @@ Senior Software Engineer at Acme Corp
 # Taxonomy / constants
 # ---------------------------------------------------------------------------
 
+
 class TestTaxonomy:
     def test_programming_languages_not_empty(self):
         assert len(PROGRAMMING_LANGUAGES) > 10
@@ -115,6 +117,7 @@ class TestTaxonomy:
 # ---------------------------------------------------------------------------
 # Synonym map
 # ---------------------------------------------------------------------------
+
 
 class TestSynonymMap:
     def test_js_maps_to_javascript(self):
@@ -161,6 +164,7 @@ class TestSynonymMap:
 # normalize_skill
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeSkill:
     def test_js_normalized(self, extractor):
         assert extractor.normalize_skill("js") == "javascript"
@@ -185,6 +189,7 @@ class TestNormalizeSkill:
 # ---------------------------------------------------------------------------
 # extract_skills – basic functionality
 # ---------------------------------------------------------------------------
+
 
 class TestExtractSkillsBasic:
     def test_returns_list(self, extractor):
@@ -231,6 +236,7 @@ class TestExtractSkillsBasic:
 # extract_skills – with sections
 # ---------------------------------------------------------------------------
 
+
 class TestExtractSkillsWithSections:
     def test_extracts_from_skills_section(self, extractor):
         result = extractor.extract_skills("", sections=SECTIONS)
@@ -253,6 +259,7 @@ class TestExtractSkillsWithSections:
 # ---------------------------------------------------------------------------
 # extract_skills – normalization in output
 # ---------------------------------------------------------------------------
+
 
 class TestExtractSkillsNormalization:
     def test_synonym_normalized_in_output(self, extractor):
@@ -280,6 +287,7 @@ class TestExtractSkillsNormalization:
 # ---------------------------------------------------------------------------
 # _extract_from_skills_section
 # ---------------------------------------------------------------------------
+
 
 class TestExtractFromSkillsSection:
     def test_comma_separated(self, extractor):
@@ -328,6 +336,7 @@ class TestExtractFromSkillsSection:
 # _extract_from_experience
 # ---------------------------------------------------------------------------
 
+
 class TestExtractFromExperience:
     def test_extracts_from_using_context(self, extractor):
         text = "Built microservices using Python and FastAPI"
@@ -354,6 +363,7 @@ class TestExtractFromExperience:
 # ---------------------------------------------------------------------------
 # get_skill_categories
 # ---------------------------------------------------------------------------
+
 
 class TestGetSkillCategories:
     def test_returns_dict(self, extractor):
@@ -420,6 +430,7 @@ class TestGetSkillCategories:
 # _is_known_skill
 # ---------------------------------------------------------------------------
 
+
 class TestIsKnownSkill:
     def test_known_language_recognized(self, extractor):
         assert extractor._is_known_skill("python") is True
@@ -455,6 +466,7 @@ class TestIsKnownSkill:
 # Ranking
 # ---------------------------------------------------------------------------
 
+
 class TestRankSkills:
     def test_more_frequent_skill_ranked_higher(self, extractor):
         text = "Python Python Python Java"
@@ -474,6 +486,7 @@ class TestRankSkills:
 # ---------------------------------------------------------------------------
 # Integration: full pipeline
 # ---------------------------------------------------------------------------
+
 
 class TestFullPipeline:
     def test_full_resume_extracts_multiple_skills(self, extractor):
