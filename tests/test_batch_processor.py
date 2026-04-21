@@ -8,7 +8,7 @@ import pytest
 
 from src.models.job import JobDescription
 from src.models.resume import ContactInfo, ResumeData
-from src.ranking.batch_processor import BatchProcessor, BatchResult, DEFAULT_BATCH_CHUNK_SIZE
+from src.ranking.batch_processor import DEFAULT_BATCH_CHUNK_SIZE, BatchProcessor, BatchResult
 from src.ranking.similarity_search import SearchResult
 
 # ---------------------------------------------------------------------------

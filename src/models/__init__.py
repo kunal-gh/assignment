@@ -1,8 +1,8 @@
 """Data models for the AI Resume Screening System."""
 
-from .resume import ResumeData, ContactInfo, Experience, Education
 from .job import JobDescription
-from .ranking import RankedCandidate, FairnessReport
+from .ranking import FairnessReport, RankedCandidate
+from .resume import ContactInfo, Education, Experience, ResumeData
 
 __all__ = [
     "ResumeData",

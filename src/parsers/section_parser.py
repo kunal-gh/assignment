@@ -1,7 +1,7 @@
 """Section identification and extraction from resume text using spaCy NLP and regex."""
 
-import re
 import logging
+import re
 from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)

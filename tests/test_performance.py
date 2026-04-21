@@ -1,14 +1,15 @@
 """Performance tests for critical path — ranking speed, skill matching throughput."""
 
 import time
-import pytest
-import numpy as np
 from unittest.mock import MagicMock
 
-from src.ranking.skill_matcher import SkillMatcher
-from src.ranking.fairness_checker import FairnessChecker
-from src.models.resume import ResumeData, ContactInfo
+import numpy as np
+import pytest
+
 from src.models.ranking import RankedCandidate
+from src.models.resume import ContactInfo, ResumeData
+from src.ranking.fairness_checker import FairnessChecker
+from src.ranking.skill_matcher import SkillMatcher
 
 
 def _make_resume(name: str, skills: list, score: float) -> RankedCandidate:

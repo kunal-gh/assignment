@@ -1,9 +1,9 @@
 """Unit tests for SectionParser – section identification and data extraction."""
 
 import pytest
-from src.parsers.section_parser import SectionParser
-from src.models.resume import ContactInfo, Experience, Education
 
+from src.models.resume import ContactInfo, Education, Experience
+from src.parsers.section_parser import SectionParser
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -1,9 +1,10 @@
 """Job description data models."""
 
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Optional
-import uuid
+
 import numpy as np
 
 

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger(__name__)

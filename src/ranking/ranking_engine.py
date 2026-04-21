@@ -1,16 +1,17 @@
 """Main ranking engine that combines semantic and skill-based scoring."""
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple
-import numpy as np
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..models.resume import ResumeData
-from ..models.job import JobDescription
-from ..models.ranking import RankedCandidate, BatchProcessingResult
+import numpy as np
+
 from ..embeddings.embedding_generator import EmbeddingGenerator
-from .skill_matcher import SkillMatcher
+from ..models.job import JobDescription
+from ..models.ranking import BatchProcessingResult, RankedCandidate
+from ..models.resume import ResumeData
 from .fairness_checker import FairnessChecker
+from .skill_matcher import SkillMatcher
 
 logger = logging.getLogger(__name__)
 

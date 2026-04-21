@@ -1,10 +1,10 @@
 """LLM service for generating ranking explanations."""
 
+import json
 import logging
 import time
-from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
-import json
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

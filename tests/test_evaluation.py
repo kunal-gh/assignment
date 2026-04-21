@@ -1,9 +1,11 @@
 """Tests for evaluation metrics module."""
 
-import pytest
 import math
-from src.utils.evaluation import RankingEvaluator, EvaluationResult, HiddenGemDetector
 from unittest.mock import MagicMock
+
+import pytest
+
+from src.utils.evaluation import EvaluationResult, HiddenGemDetector, RankingEvaluator
 
 
 class TestRankingEvaluator:

@@ -1,7 +1,9 @@
 """Tests for LLM service explanation generation."""
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.ranking.llm_service import LLMService, LLMUsage
 
 

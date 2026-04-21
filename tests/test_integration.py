@@ -1,21 +1,21 @@
 """Integration tests for end-to-end resume screening pipeline."""
 
-import pytest
 import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import numpy as np
 
-from src.parsers.resume_parser import ResumeParser
-from src.models.job import JobDescription
-from src.models.resume import ResumeData, ContactInfo
-from src.models.ranking import RankedCandidate
+import numpy as np
+import pytest
+
 from src.embeddings.embedding_generator import EmbeddingGenerator
+from src.models.job import JobDescription
+from src.models.ranking import RankedCandidate
+from src.models.resume import ContactInfo, ResumeData
+from src.parsers.resume_parser import ResumeParser
+from src.ranking.fairness_checker import FairnessChecker
 from src.ranking.ranking_engine import RankingEngine
 from src.ranking.skill_matcher import SkillMatcher
-from src.ranking.fairness_checker import FairnessChecker
-
 
 # ─── Fixtures ────────────────────────────────────────────────────────────────
 

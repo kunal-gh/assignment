@@ -1,6 +1,7 @@
 """Unit tests for SkillMatcher."""
 
 import pytest
+
 from src.ranking.skill_matcher import SkillMatcher
 
 

@@ -1,12 +1,12 @@
 """Tests for ranking engine functionality."""
 
-import pytest
 import numpy as np
+import pytest
 
-from src.ranking.ranking_engine import RankingEngine
-from src.models.resume import ResumeData, ContactInfo
 from src.models.job import JobDescription
 from src.models.ranking import RankedCandidate
+from src.models.resume import ContactInfo, ResumeData
+from src.ranking.ranking_engine import RankingEngine
 
 
 class TestRankingEngine:

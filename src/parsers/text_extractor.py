@@ -1,9 +1,9 @@
 """Text extraction from PDF and DOCX files."""
 
 import logging
-from pathlib import Path
-from typing import Optional, List
 import traceback
+from pathlib import Path
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 

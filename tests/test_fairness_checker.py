@@ -1,9 +1,10 @@
 """Unit tests for FairnessChecker."""
 
 import pytest
+
+from src.models.ranking import FairnessReport, RankedCandidate
+from src.models.resume import ContactInfo, ResumeData
 from src.ranking.fairness_checker import FairnessChecker
-from src.models.ranking import RankedCandidate, FairnessReport
-from src.models.resume import ResumeData, ContactInfo
 
 
 def _make_candidate(name: str, score: float, rank: int, years_exp: int = 3,

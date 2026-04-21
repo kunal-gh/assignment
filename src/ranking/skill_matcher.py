@@ -1,8 +1,8 @@
 """Skill matching and analysis functionality."""
 
 import logging
-from typing import List, Dict, Set, Any
 import re
+from typing import Any, Dict, List, Set
 
 logger = logging.getLogger(__name__)
 

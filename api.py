@@ -1,26 +1,26 @@
 """FastAPI backend for AI Resume Screener — REST API endpoints."""
 
+import io
 import logging
 import os
-import uuid
 import tempfile
-from typing import List, Optional, Dict, Any
+import uuid
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, BackgroundTasks, Request, Response, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+import pandas as pd
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, Request, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
-import pandas as pd
-import io
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
-from src.parsers.resume_parser import ResumeParser
-from src.models.job import JobDescription
 from src.embeddings.embedding_generator import EmbeddingGenerator
+from src.models.job import JobDescription
+from src.parsers.resume_parser import ResumeParser
 from src.ranking.ranking_engine import RankingEngine
 
 logger = logging.getLogger(__name__)

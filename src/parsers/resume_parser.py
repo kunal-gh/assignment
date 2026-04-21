@@ -1,14 +1,14 @@
 """Main resume parser class that orchestrates the parsing process."""
 
 import logging
-from pathlib import Path
-from typing import List, Optional, Dict, Any
 import traceback
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..models.resume import ResumeData, ContactInfo, Experience, Education
-from .text_extractor import TextExtractor
+from ..models.resume import ContactInfo, Education, Experience, ResumeData
 from .section_parser import SectionParser
 from .skill_extractor import SkillExtractor
+from .text_extractor import TextExtractor
 
 logger = logging.getLogger(__name__)
 

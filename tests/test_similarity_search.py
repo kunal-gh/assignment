@@ -1,15 +1,14 @@
 """Unit tests for SimilaritySearchEngine."""
 
-from unittest.mock import MagicMock, patch
 from typing import List
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
 from src.models.job import JobDescription
-from src.models.resume import ResumeData, ContactInfo
+from src.models.resume import ContactInfo, ResumeData
 from src.ranking.similarity_search import SearchResult, SimilaritySearchEngine
-
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures

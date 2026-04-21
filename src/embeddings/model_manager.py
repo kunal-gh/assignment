@@ -1,10 +1,10 @@
 """Model management for sentence transformers."""
 
+import json
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Dict, Any
-import json
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

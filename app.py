@@ -1,25 +1,27 @@
 """Main Streamlit application for AI Resume Screening System."""
 
-import streamlit as st
+import io
 import logging
 import os
 import tempfile
+from datetime import datetime
 from pathlib import Path
-import io
+
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
+import streamlit as st
 from fpdf import FPDF
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from src.embeddings.embedding_generator import EmbeddingGenerator
+from src.models.job import JobDescription
+
 # Import our modules
 from src.parsers.resume_parser import ResumeParser
-from src.models.job import JobDescription
-from src.embeddings.embedding_generator import EmbeddingGenerator
 from src.ranking.ranking_engine import RankingEngine
 
 # Page configuration

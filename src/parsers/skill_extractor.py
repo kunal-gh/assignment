@@ -7,8 +7,8 @@ Uses a combination of:
 - Pattern matching for structured skills sections
 """
 
-import re
 import logging
+import re
 from typing import Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)

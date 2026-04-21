@@ -1,12 +1,13 @@
 """Tests for resume parser functionality."""
 
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
 
+import pytest
+
+from src.models.resume import ContactInfo, ResumeData
 from src.parsers.resume_parser import ResumeParser
-from src.models.resume import ResumeData, ContactInfo
 
 
 class TestResumeParser:

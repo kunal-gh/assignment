@@ -1,19 +1,19 @@
 """Unit tests for SkillExtractor – skill extraction and normalization."""
 
 import pytest
+
 from src.parsers.skill_extractor import (
-    SkillExtractor,
-    SKILL_SYNONYMS,
-    ALL_TECHNICAL_SKILLS,
     ALL_SKILLS,
-    PROGRAMMING_LANGUAGES,
-    FRAMEWORKS_LIBRARIES,
-    DATABASES,
+    ALL_TECHNICAL_SKILLS,
     CLOUD_DEVOPS,
     DATA_SCIENCE_ML,
+    DATABASES,
+    FRAMEWORKS_LIBRARIES,
+    PROGRAMMING_LANGUAGES,
+    SKILL_SYNONYMS,
     SOFT_SKILLS,
+    SkillExtractor,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

@@ -1,12 +1,11 @@
 """Tests for embedding generator functionality."""
 
-import pytest
 import numpy as np
+import pytest
 
 from src.embeddings.embedding_generator import EmbeddingGenerator
-from src.models.resume import ResumeData, ContactInfo, Experience, Education
 from src.models.job import JobDescription
-
+from src.models.resume import ContactInfo, Education, Experience, ResumeData
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures

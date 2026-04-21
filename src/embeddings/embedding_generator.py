@@ -1,17 +1,18 @@
 """Embedding generation using sentence transformers."""
 
-import logging
 import hashlib
+import logging
 import re
 import string
-from typing import List, Optional, Union, Dict, Any, Tuple
-import numpy as np
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..models.resume import ResumeData, Experience, Education
+import numpy as np
+
 from ..models.job import JobDescription
-from .model_manager import ModelManager
+from ..models.resume import Education, Experience, ResumeData
 from .cache_manager import CacheManager
+from .model_manager import ModelManager
 
 logger = logging.getLogger(__name__)
 

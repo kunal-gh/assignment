@@ -1,8 +1,9 @@
 """API endpoint tests using FastAPI TestClient."""
 
-import pytest
 import io
 from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 # We patch the heavy ML components before importing the app

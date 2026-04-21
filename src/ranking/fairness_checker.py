@@ -1,11 +1,11 @@
 """Fairness checking and bias detection for resume rankings."""
 
 import logging
-from typing import List, Dict, Any, Optional
 import statistics
 from collections import defaultdict
+from typing import Any, Dict, List, Optional
 
-from ..models.ranking import RankedCandidate, FairnessReport
+from ..models.ranking import FairnessReport, RankedCandidate
 
 logger = logging.getLogger(__name__)
 
