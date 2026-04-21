@@ -156,28 +156,28 @@
   - **Estimate**: 2 hours
   - **Dependencies**: 2.3.3
 
-- [ ] 3.1.2 Implement semantic similarity scoring
+- [x] 3.1.2 Implement semantic similarity scoring
   - Calculate cosine similarity between embeddings
   - Normalize scores to 0-1 range
   - Handle edge cases (identical/orthogonal vectors)
   - **Estimate**: 1.5 hours
   - **Dependencies**: 3.1.1
 
-- [ ] 3.1.3 Implement skill matching scoring
+- [x] 3.1.3 Implement skill matching scoring
   - Calculate Jaccard similarity for skill sets
   - Weight required vs preferred skills
   - Handle skill normalization and synonyms
   - **Estimate**: 2 hours
   - **Dependencies**: 3.1.1
 
-- [ ] 3.1.4 Combine scores with hybrid algorithm
+- [x] 3.1.4 Combine scores with hybrid algorithm
   - Implement weighted combination formula
   - Add tie-breaking logic for equal scores
   - Validate score consistency and monotonicity
   - **Estimate**: 1.5 hours
   - **Dependencies**: 3.1.2, 3.1.3
 
-- [ ] 3.1.5 Create candidate ranking system
+- [x] 3.1.5 Create candidate ranking system
   - Sort candidates by hybrid score
   - Assign ranks with proper tie handling
   - Generate RankedCandidate objects
@@ -185,7 +185,7 @@
   - **Dependencies**: 3.1.4
 
 ### 3.2 LLM Integration for Explanations
-- [ ] 3.2.1 Create LLMService class
+- [-] 3.2.1 Create LLMService class
   - Set up OpenAI API integration
   - Implement error handling and rate limiting
   - Add token usage tracking
@@ -216,7 +216,7 @@
 ## Phase 4: Fairness and Bias Detection (Day 2-3 - 6 hours)
 
 ### 4.1 Fairness Checker Implementation
-- [ ] 4.1.1 Create FairnessChecker class
+- [x] 4.1.1 Create FairnessChecker class
   - Define fairness metrics and thresholds
   - Implement demographic data handling
   - Add bias detection algorithms

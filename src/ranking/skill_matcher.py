@@ -17,7 +17,9 @@ class SkillMatcher:
         
     def calculate_skill_match(self, resume_skills: List[str], 
                             required_skills: List[str], 
-                            preferred_skills: List[str] = None) -> float:
+                            preferred_skills: List[str] = None,
+                            required_weight: float = 0.7,
+                            preferred_weight: float = 0.3) -> float:
         """
         Calculate skill matching score using weighted Jaccard similarity.
         
@@ -25,53 +27,64 @@ class SkillMatcher:
             resume_skills: Skills from resume
             required_skills: Required skills from job
             preferred_skills: Preferred skills from job
+            required_weight: Weight for required skills (default 0.7)
+            preferred_weight: Weight for preferred skills (default 0.3)
             
         Returns:
             Skill matching score (0-1)
         """
-        if not resume_skills or not required_skills:
+        if not resume_skills:
+            return 0.0
+        
+        if not required_skills and not preferred_skills:
             return 0.0
         
         preferred_skills = preferred_skills or []
         
-        # Normalize skills
+        # Normalize skills using synonyms and standard forms
         resume_skills_norm = self._normalize_skills(resume_skills)
         required_skills_norm = self._normalize_skills(required_skills)
         preferred_skills_norm = self._normalize_skills(preferred_skills)
         
-        # Convert to sets for set operations
+        # Convert to sets for efficient set operations
         resume_set = set(resume_skills_norm)
         required_set = set(required_skills_norm)
         preferred_set = set(preferred_skills_norm)
         
-        # Calculate matches
-        required_matches = resume_set.intersection(required_set)
-        preferred_matches = resume_set.intersection(preferred_set)
+        # Calculate Jaccard similarity for required skills
+        required_score = 0.0
+        if required_set:
+            required_intersection = resume_set.intersection(required_set)
+            required_union = resume_set.union(required_set)
+            required_score = len(required_intersection) / len(required_union) if required_union else 0.0
         
-        # Calculate base score using Jaccard similarity for required skills
-        all_job_skills = required_set.union(preferred_set)
-        all_skills_union = resume_set.union(all_job_skills)
+        # Calculate Jaccard similarity for preferred skills
+        preferred_score = 0.0
+        if preferred_set:
+            preferred_intersection = resume_set.intersection(preferred_set)
+            preferred_union = resume_set.union(preferred_set)
+            preferred_score = len(preferred_intersection) / len(preferred_union) if preferred_union else 0.0
         
-        if not all_skills_union:
-            return 0.0
+        # Weighted combination of scores
+        if required_set and preferred_set:
+            # Both required and preferred skills exist
+            final_score = (required_weight * required_score) + (preferred_weight * preferred_score)
+        elif required_set:
+            # Only required skills exist
+            final_score = required_score
+        else:
+            # Only preferred skills exist
+            final_score = preferred_score
         
-        # Base Jaccard score
-        all_matches = required_matches.union(preferred_matches)
-        base_score = len(all_matches) / len(all_skills_union)
-        
-        # Apply bonuses for required skills (more important)
-        required_coverage = len(required_matches) / len(required_set) if required_set else 0
-        required_bonus = required_coverage * 0.3  # Up to 30% bonus
-        
-        # Apply smaller bonus for preferred skills
-        preferred_coverage = len(preferred_matches) / len(preferred_set) if preferred_set else 0
-        preferred_bonus = preferred_coverage * 0.1  # Up to 10% bonus
-        
-        # Combine scores
-        final_score = base_score + required_bonus + preferred_bonus
+        # Apply coverage bonus for high matches in required skills
+        if required_set:
+            required_coverage = len(resume_set.intersection(required_set)) / len(required_set)
+            if required_coverage >= 0.8:  # 80%+ coverage gets bonus
+                coverage_bonus = (required_coverage - 0.8) * 0.5  # Up to 10% bonus
+                final_score = min(1.0, final_score + coverage_bonus)
         
         # Ensure score is in [0, 1] range
-        return min(1.0, max(0.0, final_score))
+        return max(0.0, min(1.0, final_score))
     
     def analyze_skill_match(self, resume_skills: List[str], 
                           required_skills: List[str], 
@@ -210,9 +223,9 @@ class SkillMatcher:
                 if canonical_skill not in normalized:
                     normalized.append(canonical_skill)
             else:
-                # Use original skill if not in synonyms
-                if skill not in normalized:
-                    normalized.append(skill)
+                # Use lowercase version for consistency
+                if skill_lower not in normalized:
+                    normalized.append(skill_lower)
         
         return normalized
     
@@ -240,8 +253,14 @@ class SkillMatcher:
         """Get category for a specific skill."""
         skill_lower = skill.lower()
         
-        for category, keywords in self.skill_categories.items():
-            if any(keyword in skill_lower for keyword in keywords):
+        # Check each category for exact matches first
+        for category, skills_list in self.skill_categories.items():
+            if skill_lower in [s.lower() for s in skills_list]:
+                return category
+        
+        # Fallback to keyword matching
+        for category, skills_list in self.skill_categories.items():
+            if any(keyword.lower() in skill_lower for keyword in skills_list):
                 return category
         
         return 'other'
