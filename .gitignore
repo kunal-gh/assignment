@@ -149,3 +149,15 @@ models/
 logs/
 temp/
 uploads/
+
+# AI tool directories (not for repo)
+.kiro/
+.gemini/
+
+# Internal planning docs (not for public repo)
+docs/assignment mvp.md
+docs/deep-research-report.md
+docs/README.md
+
+# Development reports
+TASK_1_2_3_COMPLETION_REPORT.md
