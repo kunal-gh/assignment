@@ -60,73 +60,62 @@ class LLMService:
         
         if OPENAI_AVAILABLE:
             try:
-                if api_key:
-                    openai.api_key = api_key
-                
-                # Test API availability with a simple request
-                self.client = openai
+                import openai as openai_module
+                self.client = openai_module.OpenAI(api_key=api_key) if api_key else openai_module.OpenAI()
                 self._available = True
-                logger.info(f"LLMService initialized with model: {model}")
-                
+                logger.info(f"LLMService initialised with model: {model}")
             except Exception as e:
-                logger.error(f"Failed to initialize OpenAI client: {str(e)}")
+                logger.error(f"Failed to initialise OpenAI client: {str(e)}")
                 self._available = False
         else:
             logger.warning("OpenAI not available - explanations will use fallback templates")
-    
+
     @property
     def available(self) -> bool:
         """Check if LLM service is available."""
         return self._available
-    
-    def generate_explanation(self, 
-                           candidate_name: str,
-                           rank: int,
-                           semantic_score: float,
-                           skill_score: float,
-                           hybrid_score: float,
-                           matched_skills: List[str],
-                           missing_skills: List[str],
-                           job_title: str) -> str:
+
+    def generate_explanation(self,
+                             candidate_name: str,
+                             rank: int,
+                             semantic_score: float,
+                             skill_score: float,
+                             hybrid_score: float,
+                             matched_skills: List[str],
+                             missing_skills: List[str],
+                             job_title: str) -> str:
         """
         Generate ranking explanation using LLM.
-        
-        Args:
-            candidate_name: Name of the candidate
-            rank: Candidate's rank
-            semantic_score: Semantic similarity score
-            skill_score: Skill matching score
-            hybrid_score: Combined score
-            matched_skills: Skills that match job requirements
-            missing_skills: Skills missing from candidate
-            job_title: Job title
-            
-        Returns:
-            Generated explanation text
+
+        Falls back to template-based explanation when OpenAI is unavailable,
+        so this method is always safe to call regardless of API status.
         """
         if not self._available:
             return self._generate_fallback_explanation(
-                candidate_name, rank, semantic_score, skill_score, 
+                candidate_name, rank, semantic_score, skill_score,
                 hybrid_score, matched_skills, missing_skills, job_title
             )
-        
+
         try:
             prompt = self._build_explanation_prompt(
                 candidate_name, rank, semantic_score, skill_score,
                 hybrid_score, matched_skills, missing_skills, job_title
             )
-            
+
             response = self._make_api_request(prompt)
-            
+
             if response:
                 self._update_usage(response)
-                return response.strip()
-            else:
-                return self._generate_fallback_explanation(
+                content = response.choices[0].message.content
+                return content.strip() if content else self._generate_fallback_explanation(
                     candidate_name, rank, semantic_score, skill_score,
                     hybrid_score, matched_skills, missing_skills, job_title
                 )
-                
+            return self._generate_fallback_explanation(
+                candidate_name, rank, semantic_score, skill_score,
+                hybrid_score, matched_skills, missing_skills, job_title
+            )
+
         except Exception as e:
             logger.error(f"Error generating LLM explanation: {str(e)}")
             self.error_count += 1
@@ -134,101 +123,74 @@ class LLMService:
                 candidate_name, rank, semantic_score, skill_score,
                 hybrid_score, matched_skills, missing_skills, job_title
             )
-    
+
     def generate_batch_explanations(self, candidates_data: List[Dict[str, Any]]) -> List[str]:
-        """
-        Generate explanations for multiple candidates efficiently.
-        
-        Args:
-            candidates_data: List of candidate data dictionaries
-            
-        Returns:
-            List of explanation strings
-        """
+        """Generate explanations for multiple candidates efficiently."""
         explanations = []
-        
         for i, data in enumerate(candidates_data):
-            if i > 0:  # Rate limiting
+            if i > 0:
                 time.sleep(self.rate_limit_delay)
-            
             explanation = self.generate_explanation(**data)
             explanations.append(explanation)
-        
         return explanations
-    
-    def _build_explanation_prompt(self, 
-                                candidate_name: str,
-                                rank: int,
-                                semantic_score: float,
-                                skill_score: float,
-                                hybrid_score: float,
-                                matched_skills: List[str],
-                                missing_skills: List[str],
-                                job_title: str) -> str:
+
+    def _build_explanation_prompt(self,
+                                  candidate_name: str,
+                                  rank: int,
+                                  semantic_score: float,
+                                  skill_score: float,
+                                  hybrid_score: float,
+                                  matched_skills: List[str],
+                                  missing_skills: List[str],
+                                  job_title: str) -> str:
         """Build prompt for explanation generation."""
-        
-        matched_skills_str = ", ".join(matched_skills[:5]) if matched_skills else "none"
-        missing_skills_str = ", ".join(missing_skills[:5]) if missing_skills else "none"
-        
-        prompt = f"""Generate a concise, professional explanation for why a candidate ranked #{rank} for a {job_title} position.
+        matched_str = ", ".join(matched_skills[:5]) if matched_skills else "none"
+        missing_str = ", ".join(missing_skills[:5]) if missing_skills else "none"
+        return (
+            f"Generate a concise, professional explanation for why a candidate ranked #{rank} "
+            f"for a {job_title} position.\n\n"
+            f"Candidate: {candidate_name}\n"
+            f"Overall Score: {hybrid_score:.1%} (Rank #{rank})\n"
+            f"Semantic Match: {semantic_score:.1%}\n"
+            f"Skill Match: {skill_score:.1%}\n"
+            f"Matched Skills: {matched_str}\n"
+            f"Missing Skills: {missing_str}\n\n"
+            "Write a 2-3 sentence explanation that summarises their overall fit, "
+            "highlights key strengths, and mentions significant gaps (if any). "
+            "Keep it professional, specific, and actionable."
+        )
 
-Candidate: {candidate_name}
-Overall Score: {hybrid_score:.1%} (Rank #{rank})
-Semantic Match: {semantic_score:.1%}
-Skill Match: {skill_score:.1%}
-Matched Skills: {matched_skills_str}
-Missing Skills: {missing_skills_str}
-
-Write a 2-3 sentence explanation that:
-1. Summarizes their overall fit for the role
-2. Highlights their key strengths
-3. Mentions any significant gaps (if applicable)
-
-Keep it professional, specific, and actionable. Focus on the most important factors that influenced their ranking."""
-        
-        return prompt
-    
-    def _make_api_request(self, prompt: str) -> Optional[str]:
-        """Make API request to OpenAI."""
+    def _make_api_request(self, prompt: str) -> Optional[Any]:
+        """Make API request to OpenAI using the v1.0+ client."""
         try:
             self.request_count += 1
-            
-            response = self.client.ChatCompletion.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert HR analyst providing candidate evaluation explanations."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": prompt},
                 ],
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
-                timeout=30
+                timeout=30,
             )
-            
-            return response.choices[0].message.content
-            
+            return response
         except Exception as e:
             logger.error(f"OpenAI API request failed: {str(e)}")
             return None
-    
-    def _update_usage(self, response):
+
+    def _update_usage(self, response: Any) -> None:
         """Update usage statistics from API response."""
         try:
-            if hasattr(response, 'usage'):
-                usage = response.usage
+            usage = response.usage
+            if usage:
                 self.usage.prompt_tokens += usage.prompt_tokens
                 self.usage.completion_tokens += usage.completion_tokens
                 self.usage.total_tokens += usage.total_tokens
-                
-                # Estimate cost (approximate pricing for gpt-3.5-turbo)
                 if "gpt-3.5-turbo" in self.model:
-                    prompt_cost = usage.prompt_tokens * 0.0015 / 1000
-                    completion_cost = usage.completion_tokens * 0.002 / 1000
-                    self.usage.cost_usd += prompt_cost + completion_cost
+                    self.usage.cost_usd += (usage.prompt_tokens * 0.0015 + usage.completion_tokens * 0.002) / 1000
                 elif "gpt-4" in self.model:
-                    prompt_cost = usage.prompt_tokens * 0.03 / 1000
-                    completion_cost = usage.completion_tokens * 0.06 / 1000
-                    self.usage.cost_usd += prompt_cost + completion_cost
-                    
+                    self.usage.cost_usd += (usage.prompt_tokens * 0.03 + usage.completion_tokens * 0.06) / 1000
         except Exception as e:
             logger.debug(f"Could not update usage stats: {str(e)}")
     
