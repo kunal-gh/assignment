@@ -1,388 +1,646 @@
-"""Section parsing and information extraction from resume text."""
+"""Section identification and extraction from resume text using spaCy NLP and regex."""
 
 import re
 import logging
-from typing import Dict, List, Optional
-from datetime import datetime
-
-from ..models.resume import ContactInfo, Experience, Education
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Section header patterns
+# ---------------------------------------------------------------------------
+
+# Maps canonical section key -> list of regex patterns that match headers
+SECTION_HEADER_PATTERNS: Dict[str, List[str]] = {
+    "contact": [
+        r"contact\s*(?:information|info|details)?",
+        r"personal\s*(?:information|info|details|data)?",
+        r"profile",
+    ],
+    "summary": [
+        r"(?:professional\s+)?summary",
+        r"(?:career\s+)?objective",
+        r"about\s*(?:me)?",
+        r"overview",
+        r"professional\s+profile",
+        r"executive\s+summary",
+    ],
+    "experience": [
+        r"(?:work\s+|professional\s+|employment\s+)?experience",
+        r"work\s*history",
+        r"employment\s*(?:history|record)?",
+        r"career\s*(?:history|experience)?",
+        r"professional\s*(?:background|history)",
+        r"positions?\s*(?:held)?",
+    ],
+    "education": [
+        r"education(?:al\s+background)?",
+        r"academic\s*(?:background|history|qualifications?)?",
+        r"qualifications?",
+        r"degrees?",
+        r"schooling",
+    ],
+    "skills": [
+        r"(?:technical\s+|core\s+|key\s+|professional\s+)?skills?",
+        r"competenc(?:ies|y)",
+        r"expertise",
+        r"technologies",
+        r"technical\s*(?:proficiencies|expertise|stack)",
+        r"tools?\s*(?:and\s*technologies)?",
+        r"programming\s*(?:languages?|skills?)?",
+    ],
+    "certifications": [
+        r"certifications?",
+        r"certificates?",
+        r"licenses?\s*(?:and\s*certifications?)?",
+        r"credentials?",
+        r"accreditations?",
+    ],
+    "projects": [
+        r"projects?",
+        r"personal\s*projects?",
+        r"side\s*projects?",
+        r"notable\s*projects?",
+        r"portfolio",
+    ],
+    "awards": [
+        r"awards?\s*(?:and\s*(?:honors?|achievements?))?",
+        r"honors?",
+        r"achievements?",
+        r"accomplishments?",
+        r"recognition",
+    ],
+    "publications": [
+        r"publications?",
+        r"research",
+        r"papers?",
+        r"articles?",
+    ],
+    "languages": [
+        r"languages?",
+        r"language\s*skills?",
+        r"spoken\s*languages?",
+    ],
+    "interests": [
+        r"interests?",
+        r"hobbies",
+        r"activities",
+        r"volunteer(?:ing)?",
+        r"extracurricular",
+    ],
+    "references": [
+        r"references?",
+        r"referees?",
+    ],
+}
+
+# Pre-compile patterns for performance
+_COMPILED_SECTION_PATTERNS: Dict[str, List[re.Pattern]] = {
+    key: [re.compile(r"^\s*" + pat + r"\s*:?\s*$", re.IGNORECASE | re.MULTILINE)
+          for pat in patterns]
+    for key, patterns in SECTION_HEADER_PATTERNS.items()
+}
+
+# Regex for a generic "looks like a section header" line
+_GENERIC_HEADER_RE = re.compile(
+    r"^(?:[A-Z][A-Z\s&/\-]{2,40}|[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,4})\s*:?\s*$",
+    re.MULTILINE,
+)
+
+# ---------------------------------------------------------------------------
+# Contact extraction patterns
+# ---------------------------------------------------------------------------
+
+_EMAIL_RE = re.compile(
+    r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}", re.IGNORECASE
+)
+_PHONE_RE = re.compile(
+    r"(?:\+?1[\s\-.]?)?"
+    r"(?:\(?\d{3}\)?[\s\-.]?)"
+    r"\d{3}[\s\-.]?\d{4}"
+    r"(?:\s*(?:ext|x|ext\.)\s*\d{1,5})?",
+    re.IGNORECASE,
+)
+_LINKEDIN_RE = re.compile(
+    r"(?:https?://)?(?:www\.)?linkedin\.com/in/[\w\-]+/?", re.IGNORECASE
+)
+_GITHUB_RE = re.compile(
+    r"(?:https?://)?(?:www\.)?github\.com/[\w\-]+/?", re.IGNORECASE
+)
+
+# ---------------------------------------------------------------------------
+# Experience / Education date patterns
+# ---------------------------------------------------------------------------
+
+_DATE_RANGE_RE = re.compile(
+    r"(?:"
+    r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|"
+    r"Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
+    r"\.?\s+)?"
+    r"\d{4}"
+    r"(?:\s*[-–—]\s*"
+    r"(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|"
+    r"Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
+    r"\.?\s+)?"
+    r"(?:\d{4}|[Pp]resent|[Cc]urrent|[Nn]ow|[Tt]oday))?",
+    re.IGNORECASE,
+)
+
+_DEGREE_KEYWORDS = re.compile(
+    r"\b(?:bachelor|master|phd|ph\.d|doctorate|associate|b\.?s\.?|m\.?s\.?|"
+    r"b\.?a\.?|m\.?a\.?|m\.?b\.?a\.?|b\.?e\.?|m\.?e\.?|b\.?tech|m\.?tech|"
+    r"b\.?sc|m\.?sc|diploma|certificate|degree)\b",
+    re.IGNORECASE,
+)
+
+_GPA_RE = re.compile(r"\bgpa\s*:?\s*(\d+\.\d+)", re.IGNORECASE)
+
 
 class SectionParser:
-    """Parses resume text into structured sections and extracts information."""
-    
-    def __init__(self):
-        """Initialize section parser with regex patterns."""
-        # Common section headers
-        self.section_patterns = {
-            'contact': r'(?i)(contact|personal|info)',
-            'summary': r'(?i)(summary|profile|objective|about)',
-            'experience': r'(?i)(experience|employment|work|career|professional)',
-            'education': r'(?i)(education|academic|qualification|degree)',
-            'skills': r'(?i)(skills|technical|competenc|expertise|proficienc)',
-            'projects': r'(?i)(projects|portfolio)',
-            'certifications': r'(?i)(certification|certificate|license)',
-            'awards': r'(?i)(awards|achievement|honor|recognition)'
-        }
-        
-        # Email pattern
-        self.email_pattern = r'\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b'
-        
-        # Phone pattern (various formats)
-        self.phone_pattern = r'(?:\\+?1[-\\s]?)?\\(?[0-9]{3}\\)?[-\\s]?[0-9]{3}[-\\s]?[0-9]{4}'
-        
-        # LinkedIn pattern
-        self.linkedin_pattern = r'(?i)(?:linkedin\\.com/in/|linkedin\\.com/pub/)([A-Za-z0-9-]+)'
-        
-        # GitHub pattern
-        self.github_pattern = r'(?i)(?:github\\.com/)([A-Za-z0-9-]+)'
-        
-        # Date patterns
-        self.date_patterns = [
-            r'\\b(\\d{1,2})/(\\d{1,2})/(\\d{4})\\b',  # MM/DD/YYYY
-            r'\\b(\\d{4})-(\\d{1,2})-(\\d{1,2})\\b',  # YYYY-MM-DD
-            r'\\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\s+(\\d{4})\\b',  # Month YYYY
-            r'\\b(\\d{4})\\b'  # Just year
-        ]
-    
+    """
+    Identifies and extracts resume sections using spaCy NLP and regex patterns.
+
+    Sections detected: contact, summary, experience, education, skills,
+    certifications, projects, awards, publications, languages, interests, references.
+    """
+
+    def __init__(self, spacy_model: str = "en_core_web_sm"):
+        """
+        Initialise the section parser.
+
+        Args:
+            spacy_model: Name of the spaCy model to load.
+        """
+        self._nlp = None
+        self._spacy_model = spacy_model
+        self._load_spacy()
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     def parse_sections(self, text: str) -> Dict[str, str]:
         """
-        Parse resume text into sections.
-        
+        Split resume text into labelled sections.
+
         Args:
-            text: Raw resume text
-            
+            text: Raw resume text.
+
         Returns:
-            Dictionary mapping section names to their content
+            Dict mapping section key (e.g. 'experience') to section content.
+            A 'header' key holds any text before the first recognised section.
         """
-        sections = {}
-        lines = text.split('\\n')
-        current_section = 'header'
-        current_content = []
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            
-            # Check if this line is a section header
-            section_found = None
-            for section_name, pattern in self.section_patterns.items():
-                if re.search(pattern, line) and len(line) < 50:  # Section headers are usually short
-                    section_found = section_name
-                    break
-            
-            if section_found:
-                # Save previous section
-                if current_content:
-                    sections[current_section] = '\\n'.join(current_content)
-                
-                # Start new section
-                current_section = section_found
-                current_content = []
+        if not text or not text.strip():
+            return {}
+
+        # Normalise line endings
+        text = text.replace("\r\n", "\n").replace("\r", "\n")
+
+        # Find all section boundary positions
+        boundaries = self._find_section_boundaries(text)
+
+        if not boundaries:
+            # No sections found – return everything as raw text
+            return {"raw": text.strip()}
+
+        sections: Dict[str, str] = {}
+
+        # Text before the first section header → 'header'
+        first_start = boundaries[0][1]
+        header_text = text[:first_start].strip()
+        if header_text:
+            sections["header"] = header_text
+
+        # Slice content between consecutive boundaries
+        for idx, (section_key, start, header_end) in enumerate(boundaries):
+            end = boundaries[idx + 1][1] if idx + 1 < len(boundaries) else len(text)
+            content = text[header_end:end].strip()
+            # Merge duplicate sections (e.g. two 'skills' blocks)
+            if section_key in sections:
+                sections[section_key] = sections[section_key] + "\n" + content
             else:
-                current_content.append(line)
-        
-        # Save the last section
-        if current_content:
-            sections[current_section] = '\\n'.join(current_content)
-        
+                sections[section_key] = content
+
         return sections
-    
-    def extract_contact_info(self, text: str) -> ContactInfo:
+
+    def extract_contact_info(self, text: str):
         """
         Extract contact information from text.
-        
+
         Args:
-            text: Text containing contact information
-            
+            text: Text containing contact information (header or contact section).
+
         Returns:
-            ContactInfo object
+            ContactInfo dataclass instance.
         """
-        # Extract email
-        email_match = re.search(self.email_pattern, text)
-        email = email_match.group(0) if email_match else None
-        
-        # Extract phone
-        phone_match = re.search(self.phone_pattern, text)
-        phone = phone_match.group(0) if phone_match else None
-        
-        # Extract LinkedIn
-        linkedin_match = re.search(self.linkedin_pattern, text)
-        linkedin = f"linkedin.com/in/{linkedin_match.group(1)}" if linkedin_match else None
-        
-        # Extract GitHub
-        github_match = re.search(self.github_pattern, text)
-        github = f"github.com/{github_match.group(1)}" if github_match else None
-        
-        # Extract name (heuristic: first line that looks like a name)
+        from ..models.resume import ContactInfo  # local import to avoid circular
+
         name = self._extract_name(text)
-        
-        # Extract location (look for city, state patterns)
+        email = self._extract_first(text, _EMAIL_RE)
+        phone = self._extract_first(text, _PHONE_RE)
+        linkedin = self._extract_first(text, _LINKEDIN_RE)
+        github = self._extract_first(text, _GITHUB_RE)
         location = self._extract_location(text)
-        
+
         return ContactInfo(
-            name=name,
+            name=name or "Unknown",
             email=email,
             phone=phone,
             location=location,
             linkedin=linkedin,
-            github=github
+            github=github,
         )
-    
-    def extract_experience(self, text: str) -> List[Experience]:
+
+    def extract_experience(self, text: str):
         """
-        Extract work experience from text.
-        
+        Parse work experience entries from experience section text.
+
         Args:
-            text: Text containing work experience
-            
+            text: Content of the experience section.
+
         Returns:
-            List of Experience objects
+            List of Experience dataclass instances.
         """
+        from ..models.resume import Experience  # local import
+
+        if not text or not text.strip():
+            return []
+
+        entries = self._split_experience_entries(text)
         experiences = []
-        
-        # Split by common separators
-        experience_blocks = re.split(r'\\n\\s*\\n|\\n(?=[A-Z][^\\n]*(?:at|@|\\|))', text)
-        
-        for block in experience_blocks:
-            block = block.strip()
-            if len(block) < 20:  # Skip very short blocks
-                continue
-            
-            experience = self._parse_experience_block(block)
-            if experience:
-                experiences.append(experience)
-        
+
+        for entry in entries:
+            exp = self._parse_experience_entry(entry)
+            if exp:
+                experiences.append(exp)
+
         return experiences
-    
-    def extract_education(self, text: str) -> List[Education]:
+
+    def extract_education(self, text: str):
         """
-        Extract education information from text.
-        
+        Parse education entries from education section text.
+
         Args:
-            text: Text containing education information
-            
+            text: Content of the education section.
+
         Returns:
-            List of Education objects
+            List of Education dataclass instances.
         """
+        from ..models.resume import Education  # local import
+
+        if not text or not text.strip():
+            return []
+
+        entries = self._split_education_entries(text)
         educations = []
-        
-        # Split by common separators
-        education_blocks = re.split(r'\\n\\s*\\n|\\n(?=[A-Z][^\\n]*(?:University|College|Institute|School))', text)
-        
-        for block in education_blocks:
-            block = block.strip()
-            if len(block) < 10:  # Skip very short blocks
-                continue
-            
-            education = self._parse_education_block(block)
-            if education:
-                educations.append(education)
-        
+
+        for entry in entries:
+            edu = self._parse_education_entry(entry)
+            if edu:
+                educations.append(edu)
+
         return educations
-    
-    def _extract_name(self, text: str) -> str:
-        """Extract name from contact text."""
-        lines = [line.strip() for line in text.split('\\n') if line.strip()]
-        
-        for line in lines[:5]:  # Check first 5 lines
-            # Skip lines that look like email, phone, or addresses
-            if re.search(self.email_pattern, line) or re.search(self.phone_pattern, line):
+
+    # ------------------------------------------------------------------
+    # Section boundary detection
+    # ------------------------------------------------------------------
+
+    def _find_section_boundaries(
+        self, text: str
+    ) -> List[Tuple[str, int, int]]:
+        """
+        Return list of (section_key, line_start_pos, content_start_pos) tuples
+        sorted by position in the text.
+        """
+        found: List[Tuple[str, int, int]] = []
+        seen_positions: set = set()
+
+        lines = text.split("\n")
+        pos = 0
+
+        for line in lines:
+            line_end = pos + len(line) + 1  # +1 for the newline
+            stripped = line.strip()
+
+            if stripped:
+                section_key = self._classify_header_line(stripped)
+                if section_key and pos not in seen_positions:
+                    seen_positions.add(pos)
+                    content_start = line_end  # content starts after this line
+                    found.append((section_key, pos, content_start))
+
+            pos = line_end
+
+        return found
+
+    def _classify_header_line(self, line: str) -> Optional[str]:
+        """
+        Return the section key if *line* looks like a section header, else None.
+        """
+        # Must be reasonably short to be a header
+        if len(line) > 80:
+            return None
+
+        # Strip trailing colon / punctuation for matching
+        clean = re.sub(r"[:\-–—•*#]+$", "", line).strip()
+
+        for section_key, patterns in _COMPILED_SECTION_PATTERNS.items():
+            for pat in patterns:
+                if pat.match(clean):
+                    return section_key
+
+        # Fallback: ALL-CAPS short line that looks like a header
+        if clean.isupper() and 3 <= len(clean) <= 50:
+            # Try to map to a known section
+            lower = clean.lower()
+            for section_key, patterns in SECTION_HEADER_PATTERNS.items():
+                for pat in patterns:
+                    if re.fullmatch(pat, lower, re.IGNORECASE):
+                        return section_key
+            # Unknown all-caps header – use lowercased version as key
+            return clean.lower().replace(" ", "_")
+
+        return None
+
+    # ------------------------------------------------------------------
+    # Name extraction (uses spaCy PERSON NER)
+    # ------------------------------------------------------------------
+
+    def _extract_name(self, text: str) -> Optional[str]:
+        """Extract candidate name from the top of the resume."""
+        # Only look at the first ~500 characters (header area)
+        snippet = text[:500]
+
+        # Try spaCy NER first
+        if self._nlp is not None:
+            try:
+                doc = self._nlp(snippet)
+                for ent in doc.ents:
+                    if ent.label_ == "PERSON":
+                        name = ent.text.strip()
+                        if self._looks_like_name(name):
+                            return name
+            except Exception as exc:
+                logger.debug("spaCy NER failed for name extraction: %s", exc)
+
+        # Fallback: first non-empty line that looks like a name
+        for line in snippet.splitlines():
+            line = line.strip()
+            if not line:
                 continue
-            
-            # Look for lines that could be names (2-4 words, proper case)
+            # Skip lines that contain obvious non-name content
+            if any(
+                marker in line.lower()
+                for marker in ("@", "http", "phone", "email", "address", "linkedin")
+            ):
+                continue
+            if _EMAIL_RE.search(line) or _PHONE_RE.search(line):
+                continue
+            # A name is typically 2-4 words, each capitalised
             words = line.split()
-            if 2 <= len(words) <= 4 and all(word[0].isupper() for word in words if word.isalpha()):
+            if 2 <= len(words) <= 5 and all(
+                w[0].isupper() for w in words if w.isalpha()
+            ):
                 return line
-        
-        return "Unknown"
-    
+        return None
+
+    @staticmethod
+    def _looks_like_name(text: str) -> bool:
+        words = text.split()
+        if not (2 <= len(words) <= 5):
+            return False
+        return all(w[0].isupper() for w in words if w.isalpha())
+
+    # ------------------------------------------------------------------
+    # Location extraction
+    # ------------------------------------------------------------------
+
     def _extract_location(self, text: str) -> Optional[str]:
-        """Extract location from contact text."""
-        # Look for city, state patterns
-        location_pattern = r'\\b([A-Z][a-z]+),\\s*([A-Z]{2})\\b'
-        match = re.search(location_pattern, text)
-        
+        """Extract location/address from contact text using spaCy GPE entities."""
+        snippet = text[:600]
+
+        if self._nlp is not None:
+            try:
+                doc = self._nlp(snippet)
+                gpe_entities = [
+                    ent.text.strip()
+                    for ent in doc.ents
+                    if ent.label_ in ("GPE", "LOC")
+                ]
+                if gpe_entities:
+                    return ", ".join(gpe_entities[:2])
+            except Exception as exc:
+                logger.debug("spaCy NER failed for location extraction: %s", exc)
+
+        # Fallback: look for "City, State" or "City, Country" pattern
+        loc_re = re.compile(
+            r"\b([A-Z][a-zA-Z\s]+),\s*([A-Z]{2}|[A-Z][a-zA-Z]+)\b"
+        )
+        match = loc_re.search(snippet)
         if match:
-            return f"{match.group(1)}, {match.group(2)}"
-        
-        # Look for just city names
-        city_pattern = r'\\b([A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b'
-        cities = re.findall(city_pattern, text)
-        
-        # Filter out common non-city words
-        non_cities = {'Email', 'Phone', 'Address', 'Contact', 'LinkedIn', 'GitHub'}
-        cities = [city for city in cities if city not in non_cities]
-        
-        return cities[0] if cities else None
-    
-    def _parse_experience_block(self, block: str) -> Optional[Experience]:
-        """Parse a single experience block."""
-        lines = [line.strip() for line in block.split('\\n') if line.strip()]
-        
+            return match.group(0)
+        return None
+
+    # ------------------------------------------------------------------
+    # Experience parsing helpers
+    # ------------------------------------------------------------------
+
+    def _split_experience_entries(self, text: str) -> List[str]:
+        """
+        Split experience section text into individual job entries.
+        Heuristic: a new entry starts when we see a blank line separator.
+        If no blank lines exist, treat the whole block as one entry.
+        """
+        # Split on blank lines first (most common resume format)
+        blocks = re.split(r"\n{2,}", text.strip())
+        if len(blocks) >= 2:
+            return [b.strip() for b in blocks if b.strip()]
+
+        # Single block – return as-is so date extraction works on the full text
+        return [text.strip()]
+
+    def _parse_experience_entry(self, entry: str):
+        """Parse a single experience entry block into an Experience object."""
+        from ..models.resume import Experience
+
+        if not entry.strip():
+            return None
+
+        lines = [l.strip() for l in entry.splitlines() if l.strip()]
         if not lines:
             return None
-        
-        # First line usually contains title and company
-        first_line = lines[0]
-        
-        # Try to extract title and company
-        title, company = self._parse_title_company(first_line)
-        
-        if not title and not company:
+
+        title = ""
+        company = ""
+        start_date = None
+        end_date = None
+        is_current = False
+        description_lines = []
+
+        # Extract date range from the full entry text
+        date_match = _DATE_RANGE_RE.search(entry)
+        if date_match:
+            date_str = date_match.group(0)
+            parts = re.split(r"\s*[-–—]\s*", date_str)
+            start_date = parts[0].strip() if parts else None
+            if len(parts) > 1:
+                end_raw = parts[1].strip()
+                if re.match(r"present|current|now|today", end_raw, re.IGNORECASE):
+                    is_current = True
+                    end_date = "Present"
+                else:
+                    end_date = end_raw
+
+        # Identify which lines are "date lines" so we can skip them
+        def _is_date_line(line: str) -> bool:
+            cleaned = _DATE_RANGE_RE.sub("", line).strip()
+            return cleaned == "" and bool(_DATE_RANGE_RE.search(line))
+
+        non_date_lines = [l for l in lines if not _is_date_line(l)]
+
+        # First non-date line is usually "Title at Company" or just "Title"
+        if not non_date_lines:
             return None
-        
-        # Look for dates
-        start_date, end_date, is_current = self._extract_dates(block)
-        
-        # Combine remaining lines as description
-        description_lines = lines[1:] if len(lines) > 1 else []
-        description = '\\n'.join(description_lines) if description_lines else None
-        
+
+        first_line = non_date_lines[0]
+        # Remove any embedded date from the first line
+        first_line_clean = _DATE_RANGE_RE.sub("", first_line).strip()
+
+        at_split = re.split(r"\s+at\s+|\s*[|,]\s*", first_line_clean, maxsplit=1)
+        if len(at_split) == 2:
+            title = at_split[0].strip()
+            company = at_split[1].strip()
+            description_lines = non_date_lines[1:]
+        else:
+            title = first_line_clean
+            if len(non_date_lines) > 1:
+                second_line = _DATE_RANGE_RE.sub("", non_date_lines[1]).strip()
+                # If second line doesn't look like a bullet point, treat as company
+                if second_line and not second_line.startswith(("-", "•", "*", "·")):
+                    company = second_line
+                    description_lines = non_date_lines[2:]
+                else:
+                    description_lines = non_date_lines[1:]
+            else:
+                description_lines = []
+
+        description = " ".join(description_lines).strip() if description_lines else None
+
+        if not title:
+            return None
+
         return Experience(
-            title=title or "Unknown Position",
-            company=company or "Unknown Company",
+            title=title,
+            company=company or "Unknown",
             start_date=start_date,
             end_date=end_date,
             description=description,
-            is_current=is_current
+            is_current=is_current,
         )
-    
-    def _parse_education_block(self, block: str) -> Optional[Education]:
-        """Parse a single education block."""
-        lines = [line.strip() for line in block.split('\\n') if line.strip()]
-        
+
+    # ------------------------------------------------------------------
+    # Education parsing helpers
+    # ------------------------------------------------------------------
+
+    def _split_education_entries(self, text: str) -> List[str]:
+        """Split education section into individual entries."""
+        blocks = re.split(r"\n{2,}", text.strip())
+        if len(blocks) >= 1:
+            return [b.strip() for b in blocks if b.strip()]
+        return [text.strip()]
+
+    def _parse_education_entry(self, entry: str):
+        """Parse a single education entry block into an Education object."""
+        from ..models.resume import Education
+
+        if not entry.strip():
+            return None
+
+        lines = [l.strip() for l in entry.splitlines() if l.strip()]
         if not lines:
             return None
-        
-        # Look for degree and institution
-        degree, institution = self._parse_degree_institution(block)
-        
-        if not degree and not institution:
-            return None
-        
-        # Look for graduation date
-        graduation_date = self._extract_graduation_date(block)
-        
-        # Look for GPA
-        gpa = self._extract_gpa(block)
-        
-        # Look for major
-        major = self._extract_major(block)
-        
-        return Education(
-            degree=degree or "Unknown Degree",
-            institution=institution or "Unknown Institution",
-            graduation_date=graduation_date,
-            gpa=gpa,
-            major=major
-        )
-    
-    def _parse_title_company(self, line: str) -> tuple:
-        """Parse job title and company from a line."""
-        # Common patterns: "Title at Company", "Title | Company", "Title - Company"
-        patterns = [
-            r'^(.+?)\\s+at\\s+(.+)$',
-            r'^(.+?)\\s*\\|\\s*(.+)$',
-            r'^(.+?)\\s*-\\s*(.+)$',
-            r'^(.+?)\\s*@\\s*(.+)$'
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, line, re.IGNORECASE)
-            if match:
-                return match.group(1).strip(), match.group(2).strip()
-        
-        # If no pattern matches, assume the whole line is the title
-        return line.strip(), None
-    
-    def _parse_degree_institution(self, text: str) -> tuple:
-        """Parse degree and institution from education text."""
-        # Look for degree patterns
-        degree_patterns = [
-            r'(Bachelor|Master|PhD|Ph\\.D|MBA|BS|BA|MS|MA|B\\.S|B\\.A|M\\.S|M\\.A)\\s*(?:of|in|degree)?\\s*([^\\n]*)',
-            r'([^\\n]*(?:Bachelor|Master|PhD|Ph\\.D|MBA|BS|BA|MS|MA|B\\.S|B\\.A|M\\.S|M\\.A)[^\\n]*)'
-        ]
-        
-        degree = None
-        for pattern in degree_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                degree = match.group(0).strip()
-                break
-        
-        # Look for institution patterns
-        institution_patterns = [
-            r'(University|College|Institute|School)\\s+of\\s+([^\\n]+)',
-            r'([^\\n]*(?:University|College|Institute|School)[^\\n]*)'
-        ]
-        
-        institution = None
-        for pattern in institution_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                institution = match.group(0).strip()
-                break
-        
-        return degree, institution
-    
-    def _extract_dates(self, text: str) -> tuple:
-        """Extract start date, end date, and current status."""
-        # Look for date ranges
-        date_range_patterns = [
-            r'(\\d{4})\\s*-\\s*(\\d{4}|present|current)',
-            r'(\\w+\\s+\\d{4})\\s*-\\s*(\\w+\\s+\\d{4}|present|current)',
-            r'(\\d{1,2}/\\d{4})\\s*-\\s*(\\d{1,2}/\\d{4}|present|current)'
-        ]
-        
-        for pattern in date_range_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                start_date = match.group(1)
-                end_date = match.group(2)
-                is_current = end_date.lower() in ['present', 'current']
-                return start_date, None if is_current else end_date, is_current
-        
-        return None, None, False
-    
-    def _extract_graduation_date(self, text: str) -> Optional[str]:
-        """Extract graduation date from education text."""
-        # Look for years that could be graduation dates
-        year_matches = re.findall(r'\\b(19|20)\\d{2}\\b', text)
-        
-        if year_matches:
-            # Return the most recent year
-            years = [int(year) for year in year_matches]
-            return str(max(years))
-        
-        return None
-    
-    def _extract_gpa(self, text: str) -> Optional[float]:
-        """Extract GPA from education text."""
-        gpa_pattern = r'GPA:?\\s*(\\d+\\.\\d+)'
-        match = re.search(gpa_pattern, text, re.IGNORECASE)
-        
-        if match:
+
+        degree = ""
+        institution = ""
+        graduation_date = None
+        gpa = None
+        major = None
+
+        # Extract GPA
+        gpa_match = _GPA_RE.search(entry)
+        if gpa_match:
             try:
-                return float(match.group(1))
+                gpa = float(gpa_match.group(1))
             except ValueError:
                 pass
-        
-        return None
-    
-    def _extract_major(self, text: str) -> Optional[str]:
-        """Extract major from education text."""
-        major_patterns = [
-            r'(?:major|concentration|specialization)\\s*:?\\s*([^\\n]+)',
-            r'(?:in|of)\\s+([^\\n]*(?:Science|Engineering|Arts|Business|Studies)[^\\n]*)'
-        ]
-        
-        for pattern in major_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                return match.group(1).strip()
-        
-        return None
+
+        # Extract graduation date
+        date_match = _DATE_RANGE_RE.search(entry)
+        if date_match:
+            graduation_date = date_match.group(0).strip()
+
+        # Find degree line
+        for line in lines:
+            if _DEGREE_KEYWORDS.search(line):
+                degree_line = _DATE_RANGE_RE.sub("", line).strip()
+                # Try to split "Degree in Major"
+                in_split = re.split(r"\s+in\s+", degree_line, maxsplit=1, flags=re.IGNORECASE)
+                if len(in_split) == 2:
+                    degree = in_split[0].strip()
+                    major = in_split[1].strip()
+                else:
+                    degree = degree_line
+                break
+
+        # Find institution (line that doesn't contain degree keywords and isn't a date)
+        for line in lines:
+            clean = _DATE_RANGE_RE.sub("", line).strip()
+            if (
+                clean
+                and not _DEGREE_KEYWORDS.search(clean)
+                and not _GPA_RE.search(clean)
+                and clean != degree
+            ):
+                institution = clean
+                break
+
+        if not degree and lines:
+            degree = _DATE_RANGE_RE.sub("", lines[0]).strip()
+
+        if not degree:
+            return None
+
+        return Education(
+            degree=degree,
+            institution=institution or "Unknown",
+            graduation_date=graduation_date,
+            gpa=gpa,
+            major=major,
+        )
+
+    # ------------------------------------------------------------------
+    # Utility helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _extract_first(text: str, pattern: re.Pattern) -> Optional[str]:
+        """Return the first match of *pattern* in *text*, or None."""
+        match = pattern.search(text)
+        return match.group(0).strip() if match else None
+
+    def _load_spacy(self) -> None:
+        """Load the spaCy model, falling back gracefully if unavailable."""
+        try:
+            import spacy
+
+            self._nlp = spacy.load(self._spacy_model)
+            logger.debug("Loaded spaCy model: %s", self._spacy_model)
+        except OSError:
+            logger.warning(
+                "spaCy model '%s' not found. Falling back to regex-only parsing.",
+                self._spacy_model,
+            )
+            self._nlp = None
+        except ImportError:
+            logger.warning("spaCy not installed. Falling back to regex-only parsing.")
+            self._nlp = None

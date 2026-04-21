@@ -36,6 +36,85 @@ class TestRankingEngine:
         with pytest.raises(ValueError):
             RankingEngine(semantic_weight=1.5, skill_weight=0.5)  # Weight > 1
     
+    def test_calculate_semantic_score_identical_vectors(self):
+        """Test semantic score for identical vectors returns 1.0."""
+        vec = np.array([1.0, 2.0, 3.0, 4.0])
+        score = self.engine.calculate_semantic_score(vec, vec)
+        assert score == pytest.approx(1.0, abs=1e-6)
+    
+    def test_calculate_semantic_score_orthogonal_vectors(self):
+        """Test semantic score for orthogonal vectors returns 0.0."""
+        vec1 = np.array([1.0, 0.0, 0.0, 0.0])
+        vec2 = np.array([0.0, 1.0, 0.0, 0.0])
+        score = self.engine.calculate_semantic_score(vec1, vec2)
+        assert score == pytest.approx(0.0, abs=1e-6)
+    
+    def test_calculate_semantic_score_zero_vector(self):
+        """Test semantic score with zero vector returns 0.0."""
+        vec1 = np.array([1.0, 2.0, 3.0, 4.0])
+        vec2 = np.array([0.0, 0.0, 0.0, 0.0])
+        score = self.engine.calculate_semantic_score(vec1, vec2)
+        assert score == 0.0
+        
+        # Test both zero vectors
+        score = self.engine.calculate_semantic_score(vec2, vec2)
+        assert score == 0.0
+    
+    def test_calculate_semantic_score_normalized_range(self):
+        """Test semantic score is always in [0, 1] range."""
+        # Test with random vectors
+        np.random.seed(42)
+        for _ in range(10):
+            vec1 = np.random.randn(384)
+            vec2 = np.random.randn(384)
+            score = self.engine.calculate_semantic_score(vec1, vec2)
+            assert 0.0 <= score <= 1.0
+    
+    def test_calculate_semantic_score_opposite_vectors(self):
+        """Test semantic score for opposite vectors returns 0.0 (clamped)."""
+        vec1 = np.array([1.0, 2.0, 3.0, 4.0])
+        vec2 = np.array([-1.0, -2.0, -3.0, -4.0])
+        score = self.engine.calculate_semantic_score(vec1, vec2)
+        # Cosine similarity is -1.0, but we clamp to 0.0
+        assert score == 0.0
+    
+    def test_calculate_semantic_score_similar_vectors(self):
+        """Test semantic score for similar vectors returns high score."""
+        vec1 = np.array([1.0, 2.0, 3.0, 4.0])
+        vec2 = np.array([1.1, 2.1, 3.1, 4.1])
+        score = self.engine.calculate_semantic_score(vec1, vec2)
+        assert score > 0.99  # Should be very close to 1.0
+    
+    def test_calculate_semantic_score_dimension_mismatch(self):
+        """Test semantic score with mismatched dimensions returns 0.0."""
+        vec1 = np.array([1.0, 2.0, 3.0])
+        vec2 = np.array([1.0, 2.0, 3.0, 4.0])
+        score = self.engine.calculate_semantic_score(vec1, vec2)
+        assert score == 0.0
+    
+    def test_calculate_semantic_score_list_input(self):
+        """Test semantic score accepts list inputs and converts to numpy arrays."""
+        vec1 = [1.0, 2.0, 3.0, 4.0]
+        vec2 = [1.0, 2.0, 3.0, 4.0]
+        score = self.engine.calculate_semantic_score(vec1, vec2)
+        assert score == pytest.approx(1.0, abs=1e-6)
+    
+    def test_calculate_semantic_score_normalized_vectors(self):
+        """Test semantic score with pre-normalized vectors."""
+        # Create normalized vectors
+        vec1 = np.array([1.0, 0.0, 0.0, 0.0])
+        vec2 = np.array([0.707, 0.707, 0.0, 0.0])  # 45 degrees from vec1
+        score = self.engine.calculate_semantic_score(vec1, vec2)
+        assert score == pytest.approx(0.707, abs=1e-3)
+    
+    def test_calculate_semantic_score_symmetry(self):
+        """Test semantic score is symmetric (order doesn't matter)."""
+        vec1 = np.array([1.0, 2.0, 3.0, 4.0])
+        vec2 = np.array([4.0, 3.0, 2.0, 1.0])
+        score1 = self.engine.calculate_semantic_score(vec1, vec2)
+        score2 = self.engine.calculate_semantic_score(vec2, vec1)
+        assert score1 == pytest.approx(score2, abs=1e-6)
+    
     def test_calculate_hybrid_score_no_embeddings(self):
         """Test hybrid score calculation without pre-existing embeddings."""
         resume = ResumeData(

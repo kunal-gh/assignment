@@ -47,6 +47,48 @@ class RankingEngine:
         
         logger.info(f"RankingEngine initialized with weights: semantic={semantic_weight}, skill={skill_weight}")
     
+    def calculate_semantic_score(self, resume_embedding: np.ndarray, job_embedding: np.ndarray) -> float:
+        """
+        Calculate cosine similarity between two embedding vectors, normalized to [0, 1].
+
+        Handles edge cases:
+        - Zero vectors return 0.0
+        - Identical vectors return 1.0
+        - Orthogonal vectors return 0.0
+
+        Args:
+            resume_embedding: Embedding vector for the resume
+            job_embedding: Embedding vector for the job description
+
+        Returns:
+            Cosine similarity score in [0.0, 1.0]
+        """
+        if not isinstance(resume_embedding, np.ndarray):
+            resume_embedding = np.array(resume_embedding, dtype=np.float64)
+        if not isinstance(job_embedding, np.ndarray):
+            job_embedding = np.array(job_embedding, dtype=np.float64)
+
+        # Dimension mismatch
+        if resume_embedding.shape != job_embedding.shape:
+            logger.error(
+                f"Embedding dimension mismatch: {resume_embedding.shape} vs {job_embedding.shape}"
+            )
+            return 0.0
+
+        norm_resume = np.linalg.norm(resume_embedding)
+        norm_job = np.linalg.norm(job_embedding)
+
+        # Zero vector edge case
+        if norm_resume == 0.0 or norm_job == 0.0:
+            return 0.0
+
+        similarity = np.dot(resume_embedding, job_embedding) / (norm_resume * norm_job)
+
+        # Clamp to [0, 1] — cosine similarity for normalized embeddings is already
+        # in [-1, 1]; we clamp negatives to 0 since a negative similarity has no
+        # meaningful interpretation in the context of resume matching.
+        return float(max(0.0, min(1.0, similarity)))
+
     def calculate_hybrid_score(self, resume: ResumeData, job_desc: JobDescription) -> Dict[str, float]:
         """
         Calculate combined semantic + skill matching score.
@@ -67,7 +109,7 @@ class RankingEngine:
                 job_desc.embedding = self.embedding_generator.encode_job_description(job_desc)
             
             # Calculate semantic similarity
-            semantic_score = self.embedding_generator.cosine_similarity(
+            semantic_score = self.calculate_semantic_score(
                 resume.embedding, job_desc.embedding
             )
             
