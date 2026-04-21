@@ -1,0 +1,12 @@
+# Core ML/AI Libraries (optimized for serverless)
+sentence-transformers==3.0.1
+torch==2.0.0
+numpy==1.24.3
+spacy==3.7.2
+
+# Document Processing
+PyMuPDF==1.23.0
+python-docx==0.8.11
+
+# Utilities
+httpx==0.25.0
