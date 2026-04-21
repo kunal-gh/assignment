@@ -57,6 +57,12 @@ class SkillMatcher:
             required_intersection = resume_set.intersection(required_set)
             required_union = resume_set.union(required_set)
             required_score = len(required_intersection) / len(required_union) if required_union else 0.0
+            
+            # Apply coverage bonus for high matches in required skills
+            required_coverage = len(required_intersection) / len(required_set)
+            if required_coverage >= 0.8:  # 80%+ coverage gets bonus
+                coverage_bonus = (required_coverage - 0.8) * 0.5  # Up to 10% bonus
+                required_score = min(1.0, required_score + coverage_bonus)
         
         # Calculate Jaccard similarity for preferred skills
         preferred_score = 0.0
@@ -65,23 +71,33 @@ class SkillMatcher:
             preferred_union = resume_set.union(preferred_set)
             preferred_score = len(preferred_intersection) / len(preferred_union) if preferred_union else 0.0
         
+        # Coverage-based scores for weighted combination
+        # Using precision-style coverage: what fraction of job skills does the candidate have?
+        required_coverage_score = 0.0
+        if required_set:
+            required_matched = resume_set.intersection(required_set)
+            required_coverage_score = len(required_matched) / len(required_set)
+            # Apply coverage bonus for high matches in required skills (80%+ gets bonus)
+            if required_coverage_score >= 0.8:
+                coverage_bonus = (required_coverage_score - 0.8) * 0.5
+                required_coverage_score = min(1.0, required_coverage_score + coverage_bonus)
+
+        preferred_coverage_score = 0.0
+        if preferred_set:
+            preferred_matched = resume_set.intersection(preferred_set)
+            preferred_coverage_score = len(preferred_matched) / len(preferred_set)
+
         # Weighted combination of scores
         if required_set and preferred_set:
-            # Both required and preferred skills exist
-            final_score = (required_weight * required_score) + (preferred_weight * preferred_score)
+            # Both required and preferred skills exist — use coverage-based scoring
+            # so that different weights produce meaningfully different results
+            final_score = (required_weight * required_coverage_score) + (preferred_weight * preferred_coverage_score)
         elif required_set:
-            # Only required skills exist
+            # Only required skills exist — use Jaccard for consistency
             final_score = required_score
         else:
-            # Only preferred skills exist
+            # Only preferred skills exist — use Jaccard for consistency
             final_score = preferred_score
-        
-        # Apply coverage bonus for high matches in required skills
-        if required_set:
-            required_coverage = len(resume_set.intersection(required_set)) / len(required_set)
-            if required_coverage >= 0.8:  # 80%+ coverage gets bonus
-                coverage_bonus = (required_coverage - 0.8) * 0.5  # Up to 10% bonus
-                final_score = min(1.0, final_score + coverage_bonus)
         
         # Ensure score is in [0, 1] range
         return max(0.0, min(1.0, final_score))
