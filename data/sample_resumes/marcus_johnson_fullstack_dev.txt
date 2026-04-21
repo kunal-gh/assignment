@@ -1,0 +1,45 @@
+MARCUS JOHNSON
+Full Stack Developer
+marcus.j@gmail.com | (312) 555-0771 | github.com/marcusj
+Chicago, IL
+
+ABOUT ME
+Full stack developer with 3 years building web applications. I love working with React on the front-end and Node.js on the back-end. Recently started exploring Python for data applications and I'm excited about machine learning.
+
+WORK EXPERIENCE
+
+Junior Software Developer — WebAgency Chicago
+February 2022 – Present
+- Built React/Node.js web apps for small business clients
+- Set up PostgreSQL databases and wrote REST APIs
+- Used Git and GitHub for version control across project teams
+- Learned Docker basics for deploying apps to AWS EC2
+
+Frontend Developer Intern — TechHub Inc
+June 2021 – January 2022
+- Developed React components for e-commerce platform
+- Wrote JavaScript and TypeScript code for UI features
+- Collaborated in Agile sprints with 5-person team
+
+EDUCATION
+
+B.S. Information Technology — DePaul University, Chicago
+Graduated: May 2021
+
+SKILLS
+JavaScript, TypeScript, React, Node.js, HTML, CSS
+Python (intermediate), pandas (basic)
+PostgreSQL, MongoDB
+Docker, Git, AWS (basic)
+REST APIs, Agile
+
+SIDE PROJECTS
+
+Python Resume Parser (personal learning project)
+- Built a simple Python script to extract text from PDFs using PyMuPDF
+- Experimented with basic keyword matching to find skills in resume text
+- This got me interested in how AI-powered resume tools work!
+
+Movie Recommender
+- Simple content-based recommendation using Python and cosine similarity
+- Learned about vectors and similarity from this project

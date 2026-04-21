@@ -1,0 +1,57 @@
+PRIYA SHARMA
+Data Scientist
+priya.sharma@email.com | (650) 555-0347 | linkedin.com/in/priyasharma | github.com/priya-ml
+Mountain View, CA
+
+PROFESSIONAL SUMMARY
+Data scientist with 4 years of experience developing machine learning models for recruitment analytics and HR tech. Deep expertise in NLP, transformer models, and fairness-aware ML. Published researcher with a focus on bias detection in algorithmic hiring systems.
+
+WORK EXPERIENCE
+
+Data Scientist II — HireAI Technologies, Mountain View, CA
+January 2021 – Present
+- Developed a hybrid resume screening system combining semantic embeddings (sentence-transformers) and keyword extraction, resulting in 35% reduction in time-to-hire at client companies
+- Fine-tuned BERT models on domain-specific job description datasets achieving NDCG@10 improvement of 18% over baseline TF-IDF approach
+- Implemented fairness auditing framework using Fairlearn and demographic parity checks (four-fifths rule) to ensure EEOC compliance
+- Built FAISS-based vector indexing for similarity search across 500k+ resume corpus
+- Created Streamlit dashboards for HR teams to visualise candidate rankings and bias reports
+- Tools: Python, sentence-transformers, FAISS, spaCy, scikit-learn, Fairlearn, Streamlit, AWS
+
+Data Analyst — LinkedIn (Contract), San Jose, CA
+June 2019 – December 2020
+- Performed A/B testing and statistical analysis on job recommendation algorithms
+- Built predictive models (XGBoost, Random Forest) to estimate candidate-job fit probability
+- Designed features from structured resume data using pandas and created automated reporting pipelines
+- Tools: Python, pandas, scikit-learn, SQL, Tableau, Jupyter
+
+EDUCATION
+
+M.S. Data Science — Stanford University
+Graduated: June 2019 | GPA: 3.9/4.0
+Thesis: "Debiasing Semantic Similarity Models for Automated Resume Ranking"
+
+B.Tech Computer Science — IIT Delhi
+Graduated: May 2017 | GPA: 8.7/10
+
+TECHNICAL SKILLS
+
+NLP & ML: sentence-transformers, Hugging Face, BERT, spaCy, NLTK, PyMuPDF, pdfplumber, scikit-learn, XGBoost, PyTorch, TensorFlow, Fairlearn
+Data Engineering: pandas, numpy, Apache Spark, SQL, ETL pipelines
+Vector Search: FAISS, Pinecone, Qdrant, cosine similarity
+Web & APIs: Streamlit, FastAPI, Flask, REST APIs
+Cloud & DevOps: AWS (S3, EC2, SageMaker), Docker, Git, GitHub Actions
+Databases: PostgreSQL, MongoDB, Redis, Elasticsearch
+
+RESEARCH & PUBLICATIONS
+
+"Fairness-Aware Resume Ranking with Calibrated Similarity Scores" — AAAI Workshop on Fairness in AI, 2023
+"Demographic Parity in Automated Hiring: A Benchmark Study" — IEEE BigData 2022
+
+PROJECTS
+
+Open Source: contributed bias detection module to Fairlearn library (100+ GitHub stars)
+Resume Parser Benchmark: evaluated 6 open-source resume parsers on a dataset of 1,000 anonymised CVs
+
+AWARDS
+— Best Data Science Project, Stanford Data Science Symposium 2019
+— HireAI Technologies Q2 2022 Innovation Award
