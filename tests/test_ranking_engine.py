@@ -350,6 +350,11 @@ def mock_embedding_generator():
             resume_data.embedding = embedding
             return embedding
 
+        def batch_encode_resumes(self, resumes):
+            for resume in resumes:
+                if resume.embedding is None:
+                    self.encode_resume(resume)
+
         def encode_job_description(self, job_desc):
             # Return mock embedding
             embedding = np.random.rand(self.embedding_dimension)
