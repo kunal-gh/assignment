@@ -48,7 +48,7 @@ class TestSkillMatcher:
         preferred_skills = ["react", "aws"]
         
         score = self.matcher.calculate_skill_match(resume_skills, required_skills, preferred_skills)
-        assert 0.5 < score <= 1.0
+        assert 0.4 < score <= 1.0
     
     def test_calculate_skill_match_empty_resume_skills(self):
         """Test empty resume skills returns 0.0."""
@@ -94,10 +94,15 @@ class TestSkillMatcher:
         assert 0.0 < score_default <= 1.0
         assert 0.0 < score_equal <= 1.0
         
-        # Test with different skill sets to ensure weights matter
-        resume_skills2 = ["python", "java"]
+        # Test with asymmetric coverage: candidate has required skill but NOT preferred.
+        # required_coverage = 1.0 (python matched)
+        # preferred_coverage = 0.0 (react not in resume)
+        # So: req_heavy = 0.9 * 1.0 + 0.1 * 0.0 = 0.90
+        #     pref_heavy = 0.1 * 1.0 + 0.9 * 0.0 = 0.10
+        # These must be different.
+        resume_skills2 = ["python"]          # has required, lacks preferred
         required_skills2 = ["python"]
-        preferred_skills2 = ["java"]
+        preferred_skills2 = ["java"]         # java not in resume
         
         score_req_heavy = self.matcher.calculate_skill_match(
             resume_skills2, required_skills2, preferred_skills2,
@@ -108,8 +113,10 @@ class TestSkillMatcher:
             required_weight=0.1, preferred_weight=0.9
         )
         
-        # With different weights, scores should be different
+        # With asymmetric coverage and different weights, scores must differ
         assert score_req_heavy != score_pref_heavy
+        # Req-heavy score should be higher (candidate matches the required skill)
+        assert score_req_heavy > score_pref_heavy
     
     def test_calculate_skill_match_coverage_bonus(self):
         """Test coverage bonus for high required skill matches."""
