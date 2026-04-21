@@ -7,7 +7,8 @@ import tempfile
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, BackgroundTasks, Request, Response
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends, BackgroundTasks, Request, Response, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -61,6 +62,19 @@ async def add_security_headers(request: Request, call_next):
 
 # In-memory job store (replace with Redis/DB in production)
 _job_store: Dict[str, Any] = {}
+
+# Security setup
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    # In a real app, decode JWT and verify against DB
+    if token != "super-secret-demo-token":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return {"user_id": "admin"}
 
 # ─── Pydantic Models ──────────────────────────────────────────────────────────
 
@@ -144,6 +158,18 @@ def get_engine(semantic_weight: float = 0.7, skill_weight: float = 0.3,
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
+@app.post("/token", tags=["Auth"])
+@limiter.limit("5/minute")
+async def login_for_access_token(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
+    # Dummy auth for demo purposes
+    if form_data.username == "admin" and form_data.password == "password":
+        return {"access_token": "super-secret-demo-token", "token_type": "bearer"}
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect username or password",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 @limiter.limit("60/minute")
 async def health_check(request: Request):
@@ -170,6 +196,7 @@ async def screen_resumes(
     semantic_weight: float = 0.7,
     include_fairness: bool = True,
     embedding_model: str = "all-MiniLM-L6-v2",
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Upload resumes and screen them against a job description.
