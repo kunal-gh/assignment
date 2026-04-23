@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ai-resume-screener-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: EMBEDDING_MODEL
+        value: all-MiniLM-L6-v2
+      - key: OPENAI_API_KEY
+        sync: false  # set in Render dashboard for LLM explanations
+    healthCheckPath: /health
+    autoDeploy: true

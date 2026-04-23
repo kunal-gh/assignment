@@ -11,7 +11,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from fpdf import FPDF
-
 from src.embeddings.embedding_generator import EmbeddingGenerator
 from src.models.job import JobDescription
 from src.parsers.resume_parser import ResumeParser

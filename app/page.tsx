@@ -137,7 +137,9 @@ export default function Home() {
         <div className="inline-flex items-center gap-2 border-2 border-black px-4 py-1 mb-6 mt-4 font-sans">
           <Activity className="w-4 h-4" />
           <span className="text-xs font-bold tracking-widest uppercase">
-            AI-POWERED · NLP · SEMANTIC MATCHING
+            {process.env.NEXT_PUBLIC_API_URL
+              ? 'sentence-transformers · FAISS · spaCy · Real ML'
+              : 'AI-POWERED · NLP · SEMANTIC MATCHING'}
           </span>
         </div>
 

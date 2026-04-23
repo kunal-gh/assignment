@@ -26,6 +26,7 @@ export interface ScreeningResults {
     recommendations: string[];
   };
   created_at: string;
+  model_used?: string;
 }
 
 interface ScreeningState {
@@ -56,6 +57,22 @@ interface ScreeningState {
   clearResults: () => void;
 
   processResumes: () => Promise<void>;
+}
+
+/**
+ * API endpoint resolution:
+ * 1. If NEXT_PUBLIC_API_URL is set → use real Python ML backend (Render/Railway)
+ * 2. Otherwise → use local Next.js route handler (/api/screen)
+ *
+ * The real backend runs sentence-transformers + FAISS + spaCy.
+ * The local route uses TF-IDF (no ML deps, works on Vercel).
+ */
+function getApiUrl(): string {
+  const externalApi = process.env.NEXT_PUBLIC_API_URL;
+  if (externalApi) {
+    return `${externalApi}/screen`;
+  }
+  return '/api/screen';
 }
 
 export const useScreeningStore = create<ScreeningState>((set, get) => ({
@@ -96,10 +113,9 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
 
     set({ isProcessing: true, progress: 0, error: null, results: null });
 
-    // Animate progress while waiting
     const progressInterval = setInterval(() => {
-      set((s) => ({ progress: Math.min(s.progress + 8, 88) }));
-    }, 400);
+      set((s) => ({ progress: Math.min(s.progress + 5, 88) }));
+    }, 600);
 
     try {
       const formData = new FormData();
@@ -113,7 +129,8 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
         formData.append('files', file);
       });
 
-      const response = await fetch('/api/screen', {
+      const apiUrl = getApiUrl();
+      const response = await fetch(apiUrl, {
         method: 'POST',
         body: formData,
       });
@@ -125,21 +142,19 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
         try {
           const errData = await response.json();
           errMsg = errData.error || errMsg;
-        } catch {}
+        } catch { /* ignore */ }
         throw new Error(errMsg);
       }
 
       const data = await response.json();
-
-      // Handle Vercel serverless response format (body may be a string)
       const results: ScreeningResults =
         typeof data.body === 'string' ? JSON.parse(data.body) : data;
 
       set({ progress: 100 });
-
       setTimeout(() => {
         set({ results, isProcessing: false, progress: 0 });
       }, 400);
+
     } catch (error) {
       clearInterval(progressInterval);
       const msg = error instanceof Error ? error.message : String(error);
