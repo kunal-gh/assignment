@@ -61,8 +61,10 @@ interface ScreeningState {
 }
 
 function getApiUrl(): string {
-  // Always use the Next.js API route — it proxies to Render server-side
-  // This avoids browser CORS issues entirely
+  // Call Render directly from browser — CORS is open on the backend.
+  // Falls back to /api/screen (TF-IDF) if no external URL configured.
+  const external = process.env.NEXT_PUBLIC_API_URL;
+  if (external) return `${external}/screen`;
   return '/api/screen';
 }
 
