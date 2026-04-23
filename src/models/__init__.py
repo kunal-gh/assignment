@@ -6,7 +6,7 @@ from .resume import ContactInfo, Education, Experience, ResumeData
 
 __all__ = [
     "ResumeData",
-    "ContactInfo", 
+    "ContactInfo",
     "Experience",
     "Education",
     "JobDescription",

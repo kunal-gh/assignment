@@ -5,7 +5,7 @@ import logging
 import pickle
 import time
 from collections import OrderedDict
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -111,7 +111,7 @@ class MemoryCache:
                 del self.cache[oldest_key]
                 if oldest_key in self.timestamps:
                     del self.timestamps[oldest_key]
-                logger.debug(f"Cache full, evicted oldest item")
+                logger.debug("Cache full, evicted oldest item")
 
             # Store in cache
             self.cache[key] = serialized
@@ -169,6 +169,5 @@ def get_cache() -> MemoryCache:
 
 def clear_cache():
     """Clear global cache."""
-    global _global_cache
     if _global_cache is not None:
         _global_cache.clear()

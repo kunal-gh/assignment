@@ -3,16 +3,13 @@
 import hashlib
 import logging
 import re
-import string
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
 from ..models.job import JobDescription
 from ..models.resume import Education, Experience, ResumeData
 from .cache_manager import CacheManager
-from .memory_cache import get_cache
 from .model_manager import ModelManager
 
 logger = logging.getLogger(__name__)

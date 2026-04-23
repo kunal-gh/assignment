@@ -251,7 +251,7 @@ class SectionParser:
         Returns:
             List of Experience dataclass instances.
         """
-        from ..models.resume import Experience  # local import
+        from ..models.resume import Experience  # local import  # noqa: F401
 
         if not text or not text.strip():
             return []
@@ -276,7 +276,7 @@ class SectionParser:
         Returns:
             List of Education dataclass instances.
         """
-        from ..models.resume import Education  # local import
+        from ..models.resume import Education  # local import  # noqa: F401
 
         if not text or not text.strip():
             return []
@@ -443,7 +443,7 @@ class SectionParser:
         if not entry.strip():
             return None
 
-        lines = [l.strip() for l in entry.splitlines() if l.strip()]
+        lines = [line.strip() for line in entry.splitlines() if line.strip()]
         if not lines:
             return None
 
@@ -473,7 +473,7 @@ class SectionParser:
             cleaned = _DATE_RANGE_RE.sub("", line).strip()
             return cleaned == "" and bool(_DATE_RANGE_RE.search(line))
 
-        non_date_lines = [l for l in lines if not _is_date_line(l)]
+        non_date_lines = [line for line in lines if not _is_date_line(line)]
 
         # First non-date line is usually "Title at Company" or just "Title"
         if not non_date_lines:
@@ -533,7 +533,7 @@ class SectionParser:
         if not entry.strip():
             return None
 
-        lines = [l.strip() for l in entry.splitlines() if l.strip()]
+        lines = [line.strip() for line in entry.splitlines() if line.strip()]
         if not lines:
             return None
 

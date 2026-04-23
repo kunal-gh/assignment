@@ -1,7 +1,7 @@
 """Higher-level similarity search pipeline integrating EmbeddingGenerator and VectorStoreManager."""
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
 import numpy as np

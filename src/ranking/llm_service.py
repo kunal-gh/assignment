@@ -1,6 +1,5 @@
 """LLM service for generating ranking explanations."""
 
-import json
 import logging
 import time
 from dataclasses import dataclass
@@ -9,7 +8,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 try:
-    import openai
+    import openai as _openai  # noqa: F401
 
     OPENAI_AVAILABLE = True
 except ImportError:

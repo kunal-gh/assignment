@@ -3,7 +3,7 @@
 import mimetypes
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 def validate_file(file_path: str, max_size_mb: int = 10) -> Dict[str, Any]:

@@ -2,7 +2,7 @@
 
 import re
 import string
-from typing import List, Optional
+from typing import List
 
 
 def clean_text(text: str) -> str:

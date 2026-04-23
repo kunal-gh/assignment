@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -249,22 +249,19 @@ class RankingEngine:
 
             # Skill matching
             if skill_analysis["matched_required"]:
-                explanation_parts.append(
-                    f"Matches {len(skill_analysis['matched_required'])} required skills: "
-                    f"{', '.join(skill_analysis['matched_required'][:3])}{'...' if len(skill_analysis['matched_required']) > 3 else ''}"
-                )
+                matched = skill_analysis["matched_required"]
+                suffix = "..." if len(matched) > 3 else ""
+                explanation_parts.append(f"Matches {len(matched)} required skills: {', '.join(matched[:3])}{suffix}")
 
             if skill_analysis["matched_preferred"]:
-                explanation_parts.append(
-                    f"Also has {len(skill_analysis['matched_preferred'])} preferred skills: "
-                    f"{', '.join(skill_analysis['matched_preferred'][:3])}{'...' if len(skill_analysis['matched_preferred']) > 3 else ''}"
-                )
+                preferred = skill_analysis["matched_preferred"]
+                suffix = "..." if len(preferred) > 3 else ""
+                explanation_parts.append(f"Also has {len(preferred)} preferred skills: {', '.join(preferred[:3])}{suffix}")
 
             if skill_analysis["missing_required"]:
-                explanation_parts.append(
-                    f"Missing {len(skill_analysis['missing_required'])} required skills: "
-                    f"{', '.join(skill_analysis['missing_required'][:3])}{'...' if len(skill_analysis['missing_required']) > 3 else ''}"
-                )
+                missing = skill_analysis["missing_required"]
+                suffix = "..." if len(missing) > 3 else ""
+                explanation_parts.append(f"Missing {len(missing)} required skills: {', '.join(missing[:3])}{suffix}")
 
             # Experience level
             years_exp = resume.get_years_of_experience()

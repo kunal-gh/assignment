@@ -1,5 +1,6 @@
 """Free LLM service using Hugging Face Inference API."""
 
+import asyncio
 import logging
 import os
 from typing import Optional
@@ -205,17 +206,18 @@ class FreeLLMService:
         matched_str = ", ".join(matched_skills[:5]) if matched_skills else "none"
         missing_str = ", ".join(missing_skills[:3]) if missing_skills else "none"
 
-        prompt = f"""You are an expert recruiter. Write a concise 2-3 sentence explanation for why this candidate ranked #{rank} for a {job_title} position.
-
-Candidate: {candidate_name}
-Overall Score: {hybrid_score:.1%}
-Semantic Match: {semantic_score:.1%}
-Skill Match: {skill_score:.1%}
-Experience: {years_experience} years
-Matched Skills: {matched_str}
-Missing Skills: {missing_str}
-
-Explanation:"""
+        prompt = (
+            f"You are an expert recruiter. Write a concise 2-3 sentence explanation "
+            f"for why this candidate ranked #{rank} for a {job_title} position.\n\n"
+            f"Candidate: {candidate_name}\n"
+            f"Overall Score: {hybrid_score:.1%}\n"
+            f"Semantic Match: {semantic_score:.1%}\n"
+            f"Skill Match: {skill_score:.1%}\n"
+            f"Experience: {years_experience} years\n"
+            f"Matched Skills: {matched_str}\n"
+            f"Missing Skills: {missing_str}\n\n"
+            "Explanation:"
+        )
 
         return prompt
 
@@ -246,7 +248,8 @@ Explanation:"""
             assessment = "limited alignment"
 
         explanation_parts.append(
-            f"{candidate_name} ranks #{rank} with {hybrid_score:.1%} overall match - {assessment} for the {job_title} position."
+            f"{candidate_name} ranks #{rank} with {hybrid_score:.1%} overall match "
+            f"- {assessment} for the {job_title} position."
         )
 
         # Semantic analysis

@@ -2,8 +2,7 @@
 
 import logging
 import statistics
-from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 from ..models.ranking import FairnessReport, RankedCandidate
 
@@ -33,7 +32,6 @@ class FairnessChecker:
             return FairnessReport(total_candidates=0, top_k=0, bias_flags=["No candidates to analyze"])
 
         top_k = min(top_k, len(candidates))
-        top_candidates = candidates[:top_k]
 
         report = FairnessReport(total_candidates=len(candidates), top_k=top_k)
 

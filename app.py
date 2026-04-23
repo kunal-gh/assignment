@@ -1,11 +1,9 @@
 """Main Streamlit application for AI Resume Screening System."""
 
-import io
 import logging
 import os
 import tempfile
 from datetime import datetime
-from pathlib import Path
 from typing import List
 
 import pandas as pd
@@ -13,17 +11,14 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from fpdf import FPDF
+from src.embeddings.embedding_generator import EmbeddingGenerator
+from src.models.job import JobDescription
+from src.parsers.resume_parser import ResumeParser
+from src.ranking.ranking_engine import RankingEngine
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-from src.embeddings.embedding_generator import EmbeddingGenerator
-from src.models.job import JobDescription
-
-# Import our modules
-from src.parsers.resume_parser import ResumeParser
-from src.ranking.ranking_engine import RankingEngine
 
 # Page configuration
 st.set_page_config(page_title="AI Resume Screener", page_icon="📄", layout="wide", initial_sidebar_state="expanded")
@@ -41,7 +36,6 @@ st.markdown(
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
-    
     .metric-card {
         background: white;
         padding: 1rem;
@@ -49,7 +43,6 @@ st.markdown(
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         border-left: 4px solid #667eea;
     }
-    
     .candidate-card {
         background: #f8f9fa;
         padding: 1rem;
@@ -57,7 +50,6 @@ st.markdown(
         margin: 0.5rem 0;
         border-left: 3px solid #28a745;
     }
-    
     .stProgress > div > div > div > div {
         background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
     }
@@ -223,7 +215,7 @@ def generate_pdf_report(results, job_desc):
 
     # Title
     pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, f"AI Resume Screening Report", ln=True, align="C")
+    pdf.cell(0, 10, "AI Resume Screening Report", ln=True, align="C")
     pdf.set_font("Arial", "", 12)
     pdf.cell(0, 10, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True, align="C")
     pdf.ln(10)
@@ -340,7 +332,7 @@ def main():
             job_description = st.text_area(
                 "Job Description",
                 height=200,
-                placeholder="Enter the complete job description including requirements, responsibilities, and preferred qualifications...",
+                placeholder="Enter the full job description including requirements, responsibilities, and qualifications...",
             )
 
         with col2:
@@ -421,7 +413,7 @@ def main():
                     for file_path in file_paths:
                         try:
                             os.unlink(file_path)
-                        except:
+                        except OSError:
                             pass
 
                 except Exception as e:

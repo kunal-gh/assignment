@@ -3,7 +3,6 @@
 import logging
 import traceback
 from pathlib import Path
-from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ class TextExtractor:
 
         # Try to import PDF libraries
         try:
-            import fitz  # PyMuPDF
+            import fitz  # PyMuPDF  # noqa: F401
 
             self._pdf_extractors.append(self._extract_with_pymupdf)
             logger.debug("PyMuPDF available for PDF extraction")
@@ -26,7 +25,7 @@ class TextExtractor:
             logger.warning("PyMuPDF not available")
 
         try:
-            import pdfplumber
+            import pdfplumber  # noqa: F401
 
             self._pdf_extractors.append(self._extract_with_pdfplumber)
             logger.debug("pdfplumber available for PDF extraction")
@@ -35,7 +34,7 @@ class TextExtractor:
 
         # Try to import DOCX library
         try:
-            import docx
+            import docx  # noqa: F401
 
             self._docx_extractors.append(self._extract_with_python_docx)
             logger.debug("python-docx available for DOCX extraction")
@@ -196,8 +195,6 @@ class TextExtractor:
         Handles tables, headers, and formatting while preserving section structure.
         """
         import docx
-        from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-        from docx.shared import Pt
 
         doc = docx.Document(file_path)
         text_content = []
@@ -210,7 +207,6 @@ class TextExtractor:
 
         # Process document body with structure preservation
         current_section = []
-        last_style = None
 
         for element in doc.element.body:
             # Handle paragraphs
@@ -235,10 +231,8 @@ class TextExtractor:
 
                         # Add section header with emphasis
                         text_content.append(f"\n## {formatted_text}")
-                        last_style = "header"
                     else:
                         current_section.append(formatted_text)
-                        last_style = "paragraph"
 
             # Handle tables
             elif element.tag.endswith("tbl"):
@@ -336,6 +330,8 @@ class TextExtractor:
 
             # Check font size (headers often have larger fonts)
             try:
+                from docx.shared import Pt
+
                 if first_run.font.size and first_run.font.size >= Pt(14):
                     return True
             except Exception:
@@ -358,9 +354,8 @@ class TextExtractor:
             # Check if first row might be headers
             if table.rows:
                 first_row = table.rows[0]
-                first_row_cells = [cell.text.strip() for cell in first_row.cells]
 
-                # If first row has bold formatting or short text, treat as headers
+                # If first row has bold formatting, treat as headers
                 is_header_row = False
                 if first_row.cells:
                     for cell in first_row.cells:
