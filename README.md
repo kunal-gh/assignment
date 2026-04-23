@@ -19,7 +19,7 @@
 
 ### **Rank candidates in seconds, not hours. Understand *why*, not just *who*.**
 
-**[🚀 Live Demo](https://assignment-pi-ten.vercel.app)** &nbsp;·&nbsp; **[📦 GitHub](https://github.com/kunal-gh/assignment)** &nbsp;·&nbsp; **[📖 API Docs](https://assignment-pi-ten.vercel.app/docs)**
+**[🚀 Live Demo](https://ai-resume-screener-sepia.vercel.app)** &nbsp;·&nbsp; **[📦 GitHub](https://github.com/kunal-gh/assignment)** &nbsp;·&nbsp; **[📖 API Docs](https://ai-resume-screener-sepia.vercel.app/docs)**
 
 </div>
 
@@ -406,7 +406,7 @@ Real sentence-transformers        TF-IDF cosine similarity
 all-MiniLM-L6-v2 384-dim          No ML deps fits 250MB serverless limit
 100% free private accurate        Instant cold start publicly accessible
 
-streamlit run app.py              https://assignment-pi-ten.vercel.app
+streamlit run app.py              https://ai-resume-screener-sepia.vercel.app
 
 Why two modes?
   torch alone = ~700MB
