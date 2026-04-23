@@ -1,29 +1,4 @@
-# ─── Python ───────────────────────────────────────────────────────────────────
-__pycache__/
-*.py[cod]
-*.so
-*.egg
-*.egg-info/
-build/
-dist/
-
-# ─── Testing ──────────────────────────────────────────────────────────────────
-.pytest_cache/
-.coverage
-.coverage.*
-coverage.xml
-htmlcov/
-
-# ─── Python Environments ──────────────────────────────────────────────────────
-.env
-.venv
-venv/
-env/
-
-# ─── Type checkers ────────────────────────────────────────────────────────────
-.mypy_cache/
-
-# ─── Node.js ──────────────────────────────────────────────────────────────────
+# Node
 node_modules/
 .next/
 out/
@@ -31,28 +6,32 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# ─── IDEs ─────────────────────────────────────────────────────────────────────
+# Python (local dev only - not deployed)
+__pycache__/
+*.py[cod]
+.env
+.venv
+venv/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# IDE
 .idea/
 .vscode/
 *.swp
 
-# ─── OS ───────────────────────────────────────────────────────────────────────
+# OS
 .DS_Store
 Thumbs.db
-*.log
 
-# ─── Project specific ─────────────────────────────────────────────────────────
-models/
-*.faiss
-*.pkl
-logs/
-temp/
-uploads/
-embedding_cache/
-
-# ─── Vercel ───────────────────────────────────────────────────────────────────
+# Vercel
 .vercel
 
-# ─── AI tool directories ──────────────────────────────────────────────────────
+# AI tools
 .kiro/
 .gemini/
