@@ -1,13 +1,11 @@
 {
   "version": 2,
-  "name": "ai-resume-screener",
+  "framework": "nextjs",
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm install",
-  "framework": "nextjs",
   "functions": {
     "api/*.py": {
-      "runtime": "python3.11",
       "maxDuration": 30
     }
   }
