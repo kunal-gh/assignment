@@ -6,6 +6,7 @@ import os
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 import pandas as pd
 import plotly.express as px

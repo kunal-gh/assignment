@@ -7,12 +7,13 @@
  ██╔══██╗██╔══╝  ╚════██║██║   ██║██║╚██╔╝██║██╔══╝  
  ██║  ██║███████╗███████║╚██████╔╝██║ ╚═╝ ██║███████╗
  ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
- 
-  AI-Powered Resume Screening & Ranking System
+
+  AI-Powered Resume Screening & Candidate Ranking System
 ```
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Streamlit](https://img.shields.io/badge/streamlit-1.28%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22a559?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000?style=for-the-badge)](https://github.com/psf/black)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
@@ -20,7 +21,11 @@
 
 > **Rank candidates in seconds, not hours. Understand *why*, not just *who*.**
 
-*An intelligent, explainable, fairness-aware resume screening engine built for the modern hiring stack.*
+*An intelligent, explainable, fairness-aware resume screening engine — built as an AI/Data Science internship assignment.*
+
+**🔗 Live Demo:** [ai-resume-screener.vercel.app](https://assignment-pi-ten.vercel.app) &nbsp;|&nbsp; **📦 GitHub:** [kunal-gh/assignment](https://github.com/kunal-gh/assignment)
+
+> **Note on the live demo:** The Vercel deployment uses a lightweight simulation engine (no heavy ML models) due to Vercel's 250MB serverless size limit. For the full semantic matching experience with real `sentence-transformers` + FAISS, run locally or via Docker.
 
 </div>
 
@@ -349,6 +354,12 @@ LLM-powered (when OpenAI API key configured):
 | **DOCX Processing** | python-docx | 0.8.x | Native DOCX parsing with table and header support |
 | **Fairness** | Fairlearn | 0.11.x | Industry-standard fairness metrics by Microsoft Research |
 | **LLM (optional)** | OpenAI GPT-4o | API | Best-in-class reasoning for nuanced explanations |
+
+### 🤖 Open-Source AI & Deployment Architecture
+
+1. **The Real AI (Local/Docker):** When run locally or hosted on a dedicated server (like Render, AWS, or Railway), the platform uses the open-source **`all-MiniLM-L6-v2` Hugging Face model**. This means **100% Free / Unlimited credits** and total privacy, as no data is sent to paid 3rd party APIs like OpenAI.
+2. **The UI Showcase (Vercel):** Due to the Vercel serverless size limit (>250MB), the live Vercel link uses a **Simulated Engine (Mock AI)** to allow users to experience the high-speed UI/UX without crashing the Vercel servers.
+3. **Future Scaling:** To use the *real* semantic matching engine in production, simply deploy the provided `Dockerfile` to any container-hosting platform larger than Vercel's free tier.
 
 ### Model Comparison
 

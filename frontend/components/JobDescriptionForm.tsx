@@ -1,6 +1,6 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { Briefcase, Settings, CheckSquare, Square } from 'lucide-react';
 import { useScreeningStore } from '@/store/screeningStore';
 
 export default function JobDescriptionForm() {
@@ -18,119 +18,97 @@ export default function JobDescriptionForm() {
   const skillWeight = 1 - semanticWeight;
 
   return (
-    <div className="glass-card p-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">
-        💼 Job Description
-      </h2>
-
-      {/* Job Title */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Job Title
-        </label>
-        <input
-          type="text"
-          value={jobTitle}
-          onChange={(e) => setJobTitle(e.target.value)}
-          placeholder="e.g., Senior Software Engineer"
-          className="input-field"
-        />
+    <div className="brutalist-card p-6 flex flex-col h-full">
+      <div className="flex items-center gap-3 mb-6 pb-4 border-b-4 border-black border-solid">
+        <Briefcase className="w-6 h-6" />
+        <h2 className="text-xl font-black tracking-widest uppercase text-black">
+          JOB DESCRIPTION
+        </h2>
       </div>
 
-      {/* Job Description */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Description
-        </label>
-        <textarea
-          value={jobDescription}
-          onChange={(e) => setJobDescription(e.target.value)}
-          placeholder="Enter the full job description including requirements, responsibilities, and qualifications..."
-          rows={8}
-          className="textarea-field"
-        />
+      <div className="space-y-6 flex-1">
+        {/* Job Title */}
+        <div>
+          <label className="brutalist-label">TITLE</label>
+          <input
+            type="text"
+            value={jobTitle}
+            onChange={(e) => setJobTitle(e.target.value)}
+            placeholder="e.g., Senior Software Engineer"
+            className="brutalist-input"
+          />
+        </div>
+
+        {/* Job Description */}
+        <div className="flex-1 flex flex-col">
+          <label className="brutalist-label">DESCRIPTION</label>
+          <textarea
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            placeholder="Enter job requirements, skills, responsibilities..."
+            className="brutalist-input flex-1 min-h-[120px] resize-none"
+          />
+        </div>
       </div>
 
       {/* Configuration */}
-      <div className="space-y-6 pt-6 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-800">
-          ⚙️ Configuration
-        </h3>
+      <div className="mt-8 pt-6 border-t-4 border-black">
+        <div className="flex items-center gap-2 mb-6">
+          <Settings className="w-5 h-5" />
+          <h3 className="text-sm font-black tracking-widest uppercase text-black">
+            CONFIGURATION
+          </h3>
+        </div>
 
         {/* Semantic Weight Slider */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-sm font-medium text-gray-700">
-              Scoring Weights
-            </label>
-            <div className="text-sm text-gray-600">
-              <span className="font-medium text-primary-600">
-                {(semanticWeight * 100).toFixed(0)}%
-              </span>
-              {' semantic / '}
-              <span className="font-medium text-primary-600">
-                {(skillWeight * 100).toFixed(0)}%
-              </span>
-              {' skills'}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <label className="brutalist-label mb-0">SCORING WEIGHTS</label>
+            <div className="bg-black text-white px-2 py-1 text-xs font-black tracking-widest">
+              {(semanticWeight * 100).toFixed(0)}% SEM / {(skillWeight * 100).toFixed(0)}% SKL
             </div>
           </div>
 
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={semanticWeight}
-            onChange={(e) => setSemanticWeight(parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
-          />
+          <div className="relative pt-1">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={semanticWeight}
+              onChange={(e) => setSemanticWeight(parseFloat(e.target.value))}
+              className="w-full h-2 bg-white border-2 border-black rounded-none appearance-none cursor-pointer
+                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 
+                [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer"
+            />
+          </div>
 
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>More semantic</span>
-            <span>More skills</span>
+          <div className="flex justify-between text-xs font-bold tracking-widest text-gray-400 mt-2 uppercase">
+            <span>SEMANTIC</span>
+            <span>SKILLS</span>
           </div>
         </div>
 
         {/* Fairness Analysis Toggle */}
-        <div className="flex items-center justify-between">
+        <div
+          className="flex items-center justify-between border-4 border-black p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => setIncludeFairness(!includeFairness)}
+        >
           <div>
-            <label className="text-sm font-medium text-gray-700">
-              Fairness Analysis
-            </label>
-            <p className="text-xs text-gray-500 mt-1">
-              Detect potential bias in rankings
+            <label className="brutalist-label mb-1 cursor-pointer">FAIRNESS ANALYSIS</label>
+            <p className="text-sm font-bold tracking-widest text-gray-400">
+              Detect potential bias
             </p>
           </div>
-
-          <button
-            onClick={() => setIncludeFairness(!includeFairness)}
-            className={`
-              relative inline-flex h-6 w-11 items-center rounded-full
-              transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-              ${includeFairness ? 'bg-primary-500' : 'bg-gray-300'}
-            `}
-          >
-            <motion.span
-              animate={{ x: includeFairness ? 20 : 2 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              className="inline-block h-5 w-5 transform rounded-full bg-white shadow-lg"
-            />
-          </button>
+          <div className="text-black">
+            {includeFairness ? (
+              <CheckSquare className="w-8 h-8" />
+            ) : (
+              <Square className="w-8 h-8" />
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Tips */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
-        className="mt-6 p-4 bg-primary-50 rounded-xl border border-primary-100"
-      >
-        <p className="text-sm text-primary-800">
-          <span className="font-semibold">💡 Tip:</span> Include specific technical skills,
-          experience requirements, and responsibilities for better matching.
-        </p>
-      </motion.div>
     </div>
   );
 }
