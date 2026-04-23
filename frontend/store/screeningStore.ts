@@ -29,19 +29,16 @@ export interface ScreeningResults {
 }
 
 interface ScreeningState {
-  // Job description
   jobTitle: string;
   jobDescription: string;
   setJobTitle: (title: string) => void;
   setJobDescription: (description: string) => void;
 
-  // Files
   files: File[];
   addFiles: (newFiles: File[]) => void;
   removeFile: (index: number) => void;
   clearFiles: () => void;
 
-  // Configuration
   semanticWeight: number;
   setSemanticWeight: (weight: number) => void;
   embeddingModel: string;
@@ -49,22 +46,19 @@ interface ScreeningState {
   includeFairness: boolean;
   setIncludeFairness: (include: boolean) => void;
 
-  // Processing
   isProcessing: boolean;
   progress: number;
   setProgress: (progress: number) => void;
+  error: string | null;
 
-  // Results
   results: ScreeningResults | null;
   setResults: (results: ScreeningResults) => void;
   clearResults: () => void;
 
-  // Actions
   processResumes: () => Promise<void>;
 }
 
 export const useScreeningStore = create<ScreeningState>((set, get) => ({
-  // Initial state
   jobTitle: '',
   jobDescription: '',
   files: [],
@@ -74,42 +68,40 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
   isProcessing: false,
   progress: 0,
   results: null,
+  error: null,
 
-  // Setters
   setJobTitle: (title) => set({ jobTitle: title }),
   setJobDescription: (description) => set({ jobDescription: description }),
-  
-  addFiles: (newFiles) => set((state) => ({
-    files: [...state.files, ...newFiles]
-  })),
-  
-  removeFile: (index) => set((state) => ({
-    files: state.files.filter((_, i) => i !== index)
-  })),
-  
+
+  addFiles: (newFiles) =>
+    set((state) => ({ files: [...state.files, ...newFiles] })),
+  removeFile: (index) =>
+    set((state) => ({ files: state.files.filter((_, i) => i !== index) })),
   clearFiles: () => set({ files: [] }),
-  
+
   setSemanticWeight: (weight) => set({ semanticWeight: weight }),
   setEmbeddingModel: (model) => set({ embeddingModel: model }),
   setIncludeFairness: (include) => set({ includeFairness: include }),
-  
   setProgress: (progress) => set({ progress }),
-  setResults: (results) => set({ results, isProcessing: false }),
-  clearResults: () => set({ results: null }),
+  setResults: (results) => set({ results, isProcessing: false, error: null }),
+  clearResults: () => set({ results: null, error: null }),
 
-  // Process resumes
   processResumes: async () => {
     const state = get();
-    
+
     if (!state.jobTitle || !state.jobDescription || state.files.length === 0) {
-      alert('Please provide job title, description, and at least one resume');
+      set({ error: 'Please provide job title, description, and at least one resume.' });
       return;
     }
 
-    set({ isProcessing: true, progress: 0 });
+    set({ isProcessing: true, progress: 0, error: null, results: null });
+
+    // Animate progress while waiting
+    const progressInterval = setInterval(() => {
+      set((s) => ({ progress: Math.min(s.progress + 8, 88) }));
+    }, 400);
 
     try {
-      // Create form data
       const formData = new FormData();
       formData.append('job_title', state.jobTitle);
       formData.append('job_description', state.jobDescription);
@@ -117,19 +109,10 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
       formData.append('include_fairness', state.includeFairness.toString());
       formData.append('embedding_model', state.embeddingModel);
 
-      // Add files
       state.files.forEach((file) => {
         formData.append('files', file);
       });
 
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        set((state) => ({
-          progress: Math.min(state.progress + 10, 90)
-        }));
-      }, 500);
-
-      // Call API
       const response = await fetch('/api/screen', {
         method: 'POST',
         body: formData,
@@ -138,20 +121,30 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
+        let errMsg = `Server error: ${response.status} ${response.statusText}`;
+        try {
+          const errData = await response.json();
+          errMsg = errData.error || errMsg;
+        } catch {}
+        throw new Error(errMsg);
       }
 
-      const results = await response.json();
-      
+      const data = await response.json();
+
+      // Handle Vercel serverless response format (body may be a string)
+      const results: ScreeningResults =
+        typeof data.body === 'string' ? JSON.parse(data.body) : data;
+
       set({ progress: 100 });
+
       setTimeout(() => {
         set({ results, isProcessing: false, progress: 0 });
-      }, 500);
-
+      }, 400);
     } catch (error) {
-      console.error('Processing error:', error);
-      alert(`Error processing resumes: ${error instanceof Error ? error.message : String(error)}`);
-      set({ isProcessing: false, progress: 0 });
+      clearInterval(progressInterval);
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error('Processing error:', msg);
+      set({ isProcessing: false, progress: 0, error: msg });
     }
   },
 }));

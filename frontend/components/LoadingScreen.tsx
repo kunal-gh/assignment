@@ -3,81 +3,80 @@
 import { motion } from 'framer-motion';
 import { useScreeningStore } from '@/store/screeningStore';
 
+const STAGES = [
+  { threshold: 0,  label: 'Initializing pipeline...', icon: '🚀' },
+  { threshold: 15, label: 'Parsing resumes...', icon: '📄' },
+  { threshold: 35, label: 'Extracting skills...', icon: '🔍' },
+  { threshold: 50, label: 'Generating embeddings...', icon: '🧠' },
+  { threshold: 65, label: 'Calculating scores...', icon: '📊' },
+  { threshold: 80, label: 'Analyzing fairness...', icon: '⚖️' },
+  { threshold: 92, label: 'Finalizing results...', icon: '✨' },
+];
+
 export default function LoadingScreen() {
   const { progress } = useScreeningStore();
 
-  const stages = [
-    { threshold: 0, label: 'Initializing...', icon: '🚀' },
-    { threshold: 20, label: 'Parsing resumes...', icon: '📄' },
-    { threshold: 40, label: 'Generating embeddings...', icon: '🧠' },
-    { threshold: 60, label: 'Calculating scores...', icon: '📊' },
-    { threshold: 80, label: 'Analyzing fairness...', icon: '⚖️' },
-    { threshold: 95, label: 'Finalizing results...', icon: '✨' },
-  ];
-
-  const currentStage = stages.reduce((acc, stage) => 
-    progress >= stage.threshold ? stage : acc
-  , stages[0]);
+  const currentStage = STAGES.reduce(
+    (acc, stage) => (progress >= stage.threshold ? stage : acc),
+    STAGES[0]
+  );
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="flex items-center justify-center min-h-[60vh] p-4">
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card p-12 max-w-md w-full mx-4"
+        className="brutalist-card p-10 max-w-md w-full"
       >
-        {/* Icon */}
+        {/* Animated icon */}
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          className="text-8xl text-center mb-8"
+          key={currentStage.icon}
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-6xl text-center mb-6"
         >
           {currentStage.icon}
         </motion.div>
 
-        {/* Stage Label */}
+        {/* Stage label */}
         <motion.h2
           key={currentStage.label}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-bold text-center text-gray-800 mb-8"
+          className="text-xl font-black text-center text-black mb-6 tracking-widest uppercase"
         >
           {currentStage.label}
         </motion.h2>
 
-        {/* Progress Bar */}
-        <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden mb-4">
+        {/* Progress bar */}
+        <div className="h-4 border-2 border-black bg-gray-100 overflow-hidden mb-3">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="h-full bg-black"
           />
         </div>
 
-        {/* Progress Percentage */}
-        <p className="text-center text-gray-600 font-medium">
+        <p className="text-center text-black font-black tracking-widest text-lg mb-6">
           {progress}%
         </p>
 
-        {/* Animated Dots */}
-        <div className="flex justify-center space-x-2 mt-6">
+        {/* Dots */}
+        <div className="flex justify-center space-x-3">
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              animate={{
-                scale: [1, 1.5, 1],
-                opacity: [0.3, 1, 0.3],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                delay: i * 0.2,
-              }}
-              className="w-2 h-2 bg-primary-500 rounded-full"
+              animate={{ scale: [1, 1.5, 1], opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+              className="w-3 h-3 bg-black border border-black rounded-full"
             />
           ))}
         </div>
+
+        <p className="text-center text-xs font-bold tracking-widest uppercase text-gray-400 mt-4">
+          Semantic AI · NLP · FAISS Vector Search
+        </p>
       </motion.div>
     </div>
   );
