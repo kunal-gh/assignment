@@ -61,8 +61,8 @@ interface ScreeningState {
 }
 
 function getApiUrl(): string {
-  const external = process.env.NEXT_PUBLIC_API_URL;
-  if (external) return `${external}/screen`;
+  // Always use the Next.js API route — it proxies to Render server-side
+  // This avoids browser CORS issues entirely
   return '/api/screen';
 }
 
@@ -135,9 +135,8 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
     }, 800);
 
     try {
-      // Wake backend first (handles cold start)
-      set({ statusMessage: 'Waking up AI backend (may take ~30s on first request)...' });
-      await wakeBackend();
+      // The Next.js route proxies to Render server-side (no CORS)
+      set({ statusMessage: 'Connecting to AI backend...' });
 
       const formData = new FormData();
       formData.append('job_title', state.jobTitle);
