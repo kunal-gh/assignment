@@ -4,10 +4,8 @@ __pycache__/
 *.so
 *.egg
 *.egg-info/
-.Python
 build/
 dist/
-.eggs/
 
 # ─── Testing ──────────────────────────────────────────────────────────────────
 .pytest_cache/
@@ -15,27 +13,28 @@ dist/
 .coverage.*
 coverage.xml
 htmlcov/
-.hypothesis/
-.tox/
-.nox/
 
-# ─── Environments ─────────────────────────────────────────────────────────────
+# ─── Python Environments ──────────────────────────────────────────────────────
 .env
 .venv
 venv/
 env/
-ENV/
 
 # ─── Type checkers ────────────────────────────────────────────────────────────
 .mypy_cache/
-.pytype/
-.pyre/
+
+# ─── Node.js ──────────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
 
 # ─── IDEs ─────────────────────────────────────────────────────────────────────
 .idea/
 .vscode/
 *.swp
-*.swo
 
 # ─── OS ───────────────────────────────────────────────────────────────────────
 .DS_Store
@@ -43,7 +42,6 @@ Thumbs.db
 *.log
 
 # ─── Project specific ─────────────────────────────────────────────────────────
-data/resumes/
 models/
 *.faiss
 *.pkl
@@ -58,11 +56,3 @@ embedding_cache/
 # ─── AI tool directories ──────────────────────────────────────────────────────
 .kiro/
 .gemini/
-
-# ─── Jupyter ──────────────────────────────────────────────────────────────────
-.ipynb_checkpoints
-*.ipynb
-
-# ─── Misc ─────────────────────────────────────────────────────────────────────
-.python-version
-pip-log.txt
