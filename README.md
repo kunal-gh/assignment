@@ -155,3 +155,18 @@ Six synthetic candidates in `data/sample_resumes/` demonstrate the system:
 ---
 
 **Built by [Kunal Saini](https://github.com/kunal-gh)**
+
+---
+
+## Performance Note
+
+The AI backend runs on **Render free tier** which spins down after 15 minutes of inactivity.
+
+- **First request after inactivity:** ~30-60 seconds (model loading + cold start)
+- **Subsequent requests:** ~3-8 seconds (model cached in memory)
+- **What loads on first request:** sentence-transformers all-MiniLM-L6-v2 (~90MB) + spaCy en_core_web_sm
+
+The frontend shows a warning banner during the cold start. Just wait — it will complete.
+
+To eliminate cold starts, upgrade Render to a paid instance (\/month) or self-host via Docker.
+

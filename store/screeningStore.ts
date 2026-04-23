@@ -49,6 +49,7 @@ interface ScreeningState {
 
   isProcessing: boolean;
   progress: number;
+  statusMessage: string;
   setProgress: (progress: number) => void;
   error: string | null;
 
@@ -59,21 +60,37 @@ interface ScreeningState {
   processResumes: () => Promise<void>;
 }
 
-/**
- * API endpoint resolution:
- * 1. If NEXT_PUBLIC_API_URL is set → use real Python ML backend (Render/Railway)
- * 2. Otherwise → use local Next.js route handler (/api/screen)
- *
- * The real backend runs sentence-transformers + FAISS + spaCy.
- * The local route uses TF-IDF (no ML deps, works on Vercel).
- */
 function getApiUrl(): string {
-  const externalApi = process.env.NEXT_PUBLIC_API_URL;
-  if (externalApi) {
-    return `${externalApi}/screen`;
-  }
+  const external = process.env.NEXT_PUBLIC_API_URL;
+  if (external) return `${external}/screen`;
   return '/api/screen';
 }
+
+// Wake up the Render backend before the main request
+async function wakeBackend(): Promise<boolean> {
+  const base = process.env.NEXT_PUBLIC_API_URL;
+  if (!base) return true; // local route, no wake needed
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const r = await fetch(`${base}/health`, { signal: ctrl.signal });
+    clearTimeout(t);
+    return r.ok;
+  } catch {
+    return false; // still try main request
+  }
+}
+
+const STATUS_STAGES = [
+  { at: 0,  msg: 'Waking up AI backend...' },
+  { at: 10, msg: 'Extracting text from resumes...' },
+  { at: 25, msg: 'Running spaCy NER skill extraction...' },
+  { at: 40, msg: 'Generating sentence embeddings (all-MiniLM-L6-v2)...' },
+  { at: 55, msg: 'Running FAISS cosine similarity search...' },
+  { at: 70, msg: 'Computing hybrid scores...' },
+  { at: 82, msg: 'Generating AI explanations...' },
+  { at: 90, msg: 'Analyzing fairness metrics...' },
+];
 
 export const useScreeningStore = create<ScreeningState>((set, get) => ({
   jobTitle: '',
@@ -84,82 +101,84 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
   includeFairness: true,
   isProcessing: false,
   progress: 0,
+  statusMessage: '',
   results: null,
   error: null,
 
   setJobTitle: (title) => set({ jobTitle: title }),
-  setJobDescription: (description) => set({ jobDescription: description }),
-
-  addFiles: (newFiles) =>
-    set((state) => ({ files: [...state.files, ...newFiles] })),
-  removeFile: (index) =>
-    set((state) => ({ files: state.files.filter((_, i) => i !== index) })),
+  setJobDescription: (desc) => set({ jobDescription: desc }),
+  addFiles: (f) => set((s) => ({ files: [...s.files, ...f] })),
+  removeFile: (i) => set((s) => ({ files: s.files.filter((_, idx) => idx !== i) })),
   clearFiles: () => set({ files: [] }),
-
-  setSemanticWeight: (weight) => set({ semanticWeight: weight }),
-  setEmbeddingModel: (model) => set({ embeddingModel: model }),
-  setIncludeFairness: (include) => set({ includeFairness: include }),
-  setProgress: (progress) => set({ progress }),
-  setResults: (results) => set({ results, isProcessing: false, error: null }),
+  setSemanticWeight: (w) => set({ semanticWeight: w }),
+  setEmbeddingModel: (m) => set({ embeddingModel: m }),
+  setIncludeFairness: (v) => set({ includeFairness: v }),
+  setProgress: (p) => set({ progress: p }),
+  setResults: (r) => set({ results: r, isProcessing: false, error: null }),
   clearResults: () => set({ results: null, error: null }),
 
   processResumes: async () => {
     const state = get();
-
-    if (!state.jobTitle || !state.jobDescription || state.files.length === 0) {
+    if (!state.jobTitle || !state.jobDescription || !state.files.length) {
       set({ error: 'Please provide job title, description, and at least one resume.' });
       return;
     }
 
-    set({ isProcessing: true, progress: 0, error: null, results: null });
+    set({ isProcessing: true, progress: 0, error: null, results: null, statusMessage: 'Starting...' });
 
+    // Animate progress with stage messages
+    let currentProgress = 0;
     const progressInterval = setInterval(() => {
-      set((s) => ({ progress: Math.min(s.progress + 5, 88) }));
-    }, 600);
+      currentProgress = Math.min(currentProgress + 2, 92);
+      const stage = [...STATUS_STAGES].reverse().find(s => currentProgress >= s.at);
+      set({ progress: currentProgress, statusMessage: stage?.msg || 'Processing...' });
+    }, 800);
 
     try {
+      // Wake backend first (handles cold start)
+      set({ statusMessage: 'Waking up AI backend (may take ~30s on first request)...' });
+      await wakeBackend();
+
       const formData = new FormData();
       formData.append('job_title', state.jobTitle);
       formData.append('job_description', state.jobDescription);
       formData.append('semantic_weight', state.semanticWeight.toString());
       formData.append('include_fairness', state.includeFairness.toString());
       formData.append('embedding_model', state.embeddingModel);
+      state.files.forEach((f) => formData.append('files', f));
 
-      state.files.forEach((file) => {
-        formData.append('files', file);
-      });
+      // 3-minute timeout for cold start + ML inference
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 180000);
 
-      const apiUrl = getApiUrl();
-      const response = await fetch(apiUrl, {
+      const response = await fetch(getApiUrl(), {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       });
-
+      clearTimeout(timeout);
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        let errMsg = `Server error: ${response.status} ${response.statusText}`;
-        try {
-          const errData = await response.json();
-          errMsg = errData.error || errMsg;
-        } catch { /* ignore */ }
-        throw new Error(errMsg);
+        let msg = `Server error: ${response.status}`;
+        try { const d = await response.json(); msg = d.error || d.detail || msg; } catch { /* ignore */ }
+        throw new Error(msg);
       }
 
       const data = await response.json();
-      const results: ScreeningResults =
-        typeof data.body === 'string' ? JSON.parse(data.body) : data;
+      const results: ScreeningResults = typeof data.body === 'string' ? JSON.parse(data.body) : data;
 
-      set({ progress: 100 });
-      setTimeout(() => {
-        set({ results, isProcessing: false, progress: 0 });
-      }, 400);
+      set({ progress: 100, statusMessage: 'Done!' });
+      setTimeout(() => set({ results, isProcessing: false, progress: 0, statusMessage: '' }), 400);
 
-    } catch (error) {
+    } catch (err) {
       clearInterval(progressInterval);
-      const msg = error instanceof Error ? error.message : String(error);
-      console.error('Processing error:', msg);
-      set({ isProcessing: false, progress: 0, error: msg });
+      const msg = err instanceof Error
+        ? (err.name === 'AbortError'
+          ? 'Request timed out. The AI backend may be waking up — please try again in 30 seconds.'
+          : err.message)
+        : String(err);
+      set({ isProcessing: false, progress: 0, error: msg, statusMessage: '' });
     }
   },
 }));

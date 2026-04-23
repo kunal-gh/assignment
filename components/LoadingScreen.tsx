@@ -1,52 +1,54 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useScreeningStore } from '@/store/screeningStore';
-
-const STAGES = [
-  { threshold: 0,  label: 'Initializing pipeline...', icon: '🚀' },
-  { threshold: 15, label: 'Parsing resumes...', icon: '📄' },
-  { threshold: 35, label: 'Extracting skills...', icon: '🔍' },
-  { threshold: 50, label: 'Generating embeddings...', icon: '🧠' },
-  { threshold: 65, label: 'Calculating scores...', icon: '📊' },
-  { threshold: 80, label: 'Analyzing fairness...', icon: '⚖️' },
-  { threshold: 92, label: 'Finalizing results...', icon: '✨' },
-];
+import { Clock } from 'lucide-react';
 
 export default function LoadingScreen() {
-  const { progress } = useScreeningStore();
+  const { progress, statusMessage } = useScreeningStore();
 
-  const currentStage = STAGES.reduce(
-    (acc, stage) => (progress >= stage.threshold ? stage : acc),
-    STAGES[0]
-  );
+  const showColdStartWarning = progress < 20;
 
   return (
     <div className="flex items-center justify-center min-h-[60vh] p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="brutalist-card p-10 max-w-md w-full"
+        className="brutalist-card p-10 max-w-lg w-full"
       >
-        {/* Animated icon */}
-        <motion.div
-          key={currentStage.icon}
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-6xl text-center mb-6"
-        >
-          {currentStage.icon}
-        </motion.div>
+        {/* Cold start notice — shown at the start */}
+        <AnimatePresence>
+          {showColdStartWarning && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="flex items-start gap-3 border-4 border-black bg-yellow-50 p-4 mb-6"
+            >
+              <Clock className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-black tracking-widest uppercase text-black mb-1">
+                  First request may take 30–60s
+                </p>
+                <p className="text-xs font-medium text-gray-600 leading-relaxed">
+                  The AI backend (sentence-transformers + FAISS) runs on Render free tier
+                  and spins down after 15 min of inactivity. It&apos;s waking up now —
+                  subsequent requests will be fast.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Stage label */}
-        <motion.h2
-          key={currentStage.label}
-          initial={{ opacity: 0, y: 8 }}
+        {/* Status message */}
+        <motion.p
+          key={statusMessage}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xl font-black text-center text-black mb-6 tracking-widest uppercase"
+          className="text-sm font-black tracking-widest uppercase text-black mb-6 text-center min-h-[20px]"
         >
-          {currentStage.label}
-        </motion.h2>
+          {statusMessage || 'Processing...'}
+        </motion.p>
 
         {/* Progress bar */}
         <div className="h-4 border-2 border-black bg-gray-100 overflow-hidden mb-3">
@@ -62,6 +64,27 @@ export default function LoadingScreen() {
           {progress}%
         </p>
 
+        {/* Pipeline steps */}
+        <div className="space-y-1 mb-6">
+          {[
+            { label: 'PDF text extraction (PyMuPDF)', done: progress >= 25 },
+            { label: 'spaCy NER + skill extraction', done: progress >= 40 },
+            { label: 'sentence-transformers embeddings', done: progress >= 55 },
+            { label: 'FAISS cosine similarity', done: progress >= 70 },
+            { label: 'Hybrid scoring + explanations', done: progress >= 82 },
+            { label: 'Fairness analysis', done: progress >= 90 },
+          ].map(({ label, done }) => (
+            <div key={label} className="flex items-center gap-2">
+              <span className={`text-xs font-bold ${done ? 'text-black' : 'text-gray-300'}`}>
+                {done ? '✓' : '○'}
+              </span>
+              <span className={`text-xs font-medium tracking-wide ${done ? 'text-black' : 'text-gray-300'}`}>
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+
         {/* Dots */}
         <div className="flex justify-center space-x-3">
           {[0, 1, 2].map((i) => (
@@ -73,10 +96,6 @@ export default function LoadingScreen() {
             />
           ))}
         </div>
-
-        <p className="text-center text-xs font-bold tracking-widest uppercase text-gray-400 mt-4">
-          Semantic AI · NLP · FAISS Vector Search
-        </p>
       </motion.div>
     </div>
   );
