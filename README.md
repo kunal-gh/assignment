@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 ```
  ██████╗ ███████╗███████╗██╗   ██╗███╗   ███╗███████╗
@@ -7,25 +7,19 @@
  ██╔══██╗██╔══╝  ╚════██║██║   ██║██║╚██╔╝██║██╔══╝  
  ██║  ██║███████╗███████║╚██████╔╝██║ ╚═╝ ██║███████╗
  ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝
-
   AI-Powered Resume Screening & Candidate Ranking System
 ```
 
-[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![Streamlit](https://img.shields.io/badge/streamlit-1.28%2B-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-22a559?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000?style=for-the-badge)](https://github.com/psf/black)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/features/actions)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22a559?style=for-the-badge)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/kunal-gh/assignment/ci.yml?branch=main&style=for-the-badge&label=CI)](https://github.com/kunal-gh/assignment/actions)
 
-> **Rank candidates in seconds, not hours. Understand *why*, not just *who*.**
+### **Rank candidates in seconds, not hours. Understand *why*, not just *who*.**
 
-*An intelligent, explainable, fairness-aware resume screening engine — built as an AI/Data Science internship assignment.*
-
-**🔗 Live Demo:** [ai-resume-screener.vercel.app](https://assignment-pi-ten.vercel.app) &nbsp;|&nbsp; **📦 GitHub:** [kunal-gh/assignment](https://github.com/kunal-gh/assignment)
-
-> **Note on the live demo:** The Vercel deployment uses a lightweight simulation engine (no heavy ML models) due to Vercel's 250MB serverless size limit. For the full semantic matching experience with real `sentence-transformers` + FAISS, run locally or via Docker.
+**[🚀 Live Demo](https://assignment-pi-ten.vercel.app)** &nbsp;·&nbsp; **[📦 GitHub](https://github.com/kunal-gh/assignment)** &nbsp;·&nbsp; **[📖 API Docs](https://assignment-pi-ten.vercel.app/docs)**
 
 </div>
 
@@ -33,64 +27,73 @@
 
 ## Table of Contents
 
-1. [What This Does](#-what-this-does)
-2. [The Problem We're Solving](#-the-problem-were-solving)
-3. [System Architecture](#️-system-architecture)
-4. [How the Algorithm Works](#-how-the-algorithm-works)
-5. [Tech Stack Deep Dive](#-tech-stack-deep-dive)
-6. [Project Structure](#-project-structure)
-7. [Quick Start](#-quick-start)
-8. [Docker Setup](#-docker-setup)
-9. [Usage Guide](#-usage-guide)
-10. [Configuration Reference](#-configuration-reference)
-11. [Sample Data & Demo](#-sample-data--demo)
-12. [API Reference](#-api-reference)
-13. [Scoring Formula & Tuning](#-scoring-formula--tuning)
-14. [Fairness & Bias Detection](#️-fairness--bias-detection)
-15. [Evaluation Metrics](#-evaluation-metrics)
-16. [Performance Benchmarks](#-performance-benchmarks)
-17. [Testing](#-testing)
-18. [CI/CD Pipeline](#-cicd-pipeline)
-19. [Roadmap](#-roadmap)
-20. [Research Background](#-research-background)
-21. [Contributing](#-contributing)
-22. [License](#-license)
+| # | Section |
+|---|---------|
+| 1 | [What It Does](#-what-it-does) |
+| 2 | [The Hidden Gem Problem](#-the-hidden-gem-problem) |
+| 3 | [System Architecture](#-system-architecture) |
+| 4 | [How the Algorithm Works](#-how-the-algorithm-works) |
+| 5 | [Tech Stack](#-tech-stack) |
+| 6 | [Deployment Architecture](#-deployment-architecture) |
+| 7 | [Project Structure](#-project-structure) |
+| 8 | [Quick Start](#-quick-start) |
+| 9 | [Docker Setup](#-docker-setup) |
+| 10 | [API Reference](#-api-reference) |
+| 11 | [Scoring Formula](#-scoring-formula--tuning) |
+| 12 | [Fairness & Bias Detection](#-fairness--bias-detection) |
+| 13 | [Evaluation Metrics](#-evaluation-metrics) |
+| 14 | [Testing & CI/CD](#-testing--cicd) |
+| 15 | [Sample Data](#-sample-data) |
+| 16 | [Roadmap](#-roadmap) |
+| 17 | [Research Background](#-research-background) |
 
 ---
 
-## 🎯 What This Does
+## 🎯 What It Does
 
-RESUME is an **end-to-end AI pipeline** that takes a pile of resumes and a job description and returns a ranked, explained, fairness-audited list of the best candidates — in seconds.
+RESUME is an **end-to-end AI pipeline** that ingests a pile of resumes and a job description and returns a ranked, explained, fairness-audited shortlist — in seconds.
 
 ```
-INPUT:  [resume_1.pdf, resume_2.pdf, ..., resume_N.pdf]  +  Job Description (text)
+INPUT:  [resume_1.pdf, resume_2.pdf, ..., resume_N.pdf]  +  Job Description
                               ↓
-                    ┌─────────────────┐
-                    │   RESUME AI     │
-                    │  Parsing        │
-                    │  Embedding      │
-                    │  Scoring        │
-                    │  Fairness Check │
-                    └─────────────────┘
+         ┌────────────────────────────────────────┐
+         │            RESUME AI PIPELINE          │
+         │                                        │
+         │  1. Parse    → extract text + sections │
+         │  2. Embed    → 384-dim semantic vectors │
+         │  3. Score    → hybrid semantic + skills │
+         │  4. Rank     → sort + tie-break         │
+         │  5. Explain  → plain-English rationale  │
+         │  6. Audit    → fairness + bias check    │
+         └────────────────────────────────────────┘
                               ↓
-OUTPUT: Ranked candidates with scores 0–100, explained, bias-audited
+OUTPUT: Ranked candidates · Scores 0–100 · Explanations · Bias report
 ```
 
-**In plain English:** it reads every resume, understands the context and meaning (not just keywords), matches skills, scores each candidate on a 0–100 scale, generates a plain English explanation for each ranking, and flags potential bias — all presented in a clean Streamlit dashboard.
+**In plain English:** it reads every resume, understands meaning (not just keywords), matches skills, scores each candidate 0–100, generates a plain-English explanation for every ranking, and flags potential bias — all in a clean dashboard.
 
 ---
 
-## 🔍 The Problem We're Solving
+## 💎 The Hidden Gem Problem
 
-Traditional resume screening has three deep problems:
+This is the core problem semantic AI solves. Traditional ATS keyword matching fails like this:
 
-| Problem | Traditional Approach | Our Approach |
-|---------|---------------------|--------------|
-| **Keyword blindness** | Misses "coding in Python" if JD says "Python programming" | Transformer embeddings capture semantic equivalence |
-| **Hidden gems lost** | Strong candidates with non-standard wording buried | Cosine similarity across the full semantic space finds them |
-| **Bias unchecked** | No visibility into which groups get shortlisted | Four-fifths rule + demographic parity checked automatically |
+```
+Job Description says:          Candidate writes:
+─────────────────────────────────────────────────────────────────
+"resume screening"        →    "document understanding pipeline"
+"rank candidates"         →    "semantic similarity ranking system"
+"extract skills"          →    "information extraction from text"
+"bias detection"          →    "algorithmic fairness, parity eval"
+─────────────────────────────────────────────────────────────────
 
-**The "Hidden Gem" Problem** is real and significant. A candidate who writes *"developed recommendation algorithms using distributed computing"* could be a perfect match for a job that says *"build ML pipelines at scale with Spark"* — but keyword matching would give them a near-zero score. Our semantic embedding approach captures this equivalence and ranks them correctly.
+Keyword / TF-IDF score:   12%   ← buried at the bottom
+Semantic AI score:        78%   ← correctly surfaced near the top
+```
+
+The candidate is a perfect fit. Keyword matching would reject them. **This is why embeddings matter.**
+
+Our system detects these "hidden gems" automatically — candidates whose semantic score significantly exceeds their keyword-match score — and flags them for manual review.
 
 ---
 
@@ -99,62 +102,71 @@ Traditional resume screening has three deep problems:
 ### High-Level Data Flow
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│                          RESUME AI SYSTEM                                │
-│                                                                          │
-│  ┌─────────────┐    ┌──────────────┐    ┌───────────────────────────┐   │
-│  │  INPUT DATA │    │  PARSE LAYER │    │    ML / AI LAYER          │   │
-│  │             │    │              │    │                           │   │
-│  │ PDF Resumes │───▶│  PyMuPDF     │───▶│ EmbeddingGenerator        │   │
-│  │ DOCX Files  │    │  pdfplumber  │    │  ├─ all-MiniLM-L6-v2      │   │
-│  │ Job Desc.   │    │  python-docx │    │  ├─ all-mpnet-base-v2     │   │
-│  └─────────────┘    │              │    │  └─ multi-qa-MiniLM       │   │
-│                     │  SectionParse│    │                           │   │
-│                     │  SkillExtract│    │ VectorStore (FAISS)       │   │
-│                     └──────────────┘    │  └─ cosine similarity     │   │
-│                                         │                           │   │
-│                                         │ RankingEngine             │   │
-│                                         │  ├─ SemanticScore (70%)   │   │
-│                                         │  ├─ SkillMatch (30%)      │   │
-│                                         │  └─ HybridScore 0–100     │   │
-│                                         │                           │   │
-│                                         │ FairnessChecker           │   │
-│                                         │  ├─ Demographic Parity    │   │
-│                                         │  └─ Four-Fifths Rule      │   │
-│                                         └───────────────────────────┘   │
-│                                                        │                 │
-│  ┌──────────────────────────────────────────────────┐  │                 │
-│  │               STREAMLIT UI                        │◀─┘                │
-│  │  Upload → Process → Results → Analytics → Export │                   │
-│  └──────────────────────────────────────────────────┘                   │
-└──────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        RESUME AI SYSTEM v1.0                           │
+│                                                                         │
+│  ┌──────────────┐   ┌─────────────────┐   ┌──────────────────────────┐ │
+│  │  INPUT LAYER │   │   PARSE LAYER   │   │      ML / AI LAYER       │ │
+│  │              │   │                 │   │                          │ │
+│  │ PDF Resumes  │──▶│ PyMuPDF (fitz)  │──▶│ EmbeddingGenerator       │ │
+│  │ DOCX Files   │   │ pdfplumber      │   │  └─ all-MiniLM-L6-v2     │ │
+│  │ Job Desc.    │   │ python-docx     │   │     384-dim vectors       │ │
+│  └──────────────┘   │                 │   │                          │ │
+│                     │ SectionParser   │   │ VectorStore (FAISS)      │ │
+│                     │  └─ spaCy NER   │   │  └─ IndexFlatIP          │ │
+│                     │  └─ regex       │   │  └─ cosine similarity    │ │
+│                     │                 │   │                          │ │
+│                     │ SkillExtractor  │   │ RankingEngine            │ │
+│                     │  └─ 200+ skills │   │  ├─ SemanticScore (70%)  │ │
+│                     │  └─ IDF weights │   │  ├─ SkillScore   (30%)   │ │
+│                     └─────────────────┘   │  └─ HybridScore 0–100   │ │
+│                                           │                          │ │
+│                                           │ FairnessChecker          │ │
+│                                           │  ├─ Four-fifths rule     │ │
+│                                           │  └─ Demographic parity  │ │
+│                                           │                          │ │
+│                                           │ LLMService (optional)    │ │
+│                                           │  └─ GPT-4o explanations │ │
+│                                           └──────────────────────────┘ │
+│                                                        │                │
+│  ┌─────────────────────────────────────────────────┐  │                │
+│  │              OUTPUT LAYER                        │◀─┘                │
+│  │  Streamlit Dashboard  │  FastAPI REST  │  Next.js│                  │
+│  │  Rankings · Charts    │  /screen POST  │  Vercel │                  │
+│  └─────────────────────────────────────────────────┘                  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Dependency Tree
+### Component Dependency Graph
 
 ```
-app.py (Streamlit)
-├── src/parsers/
-│   ├── resume_parser.py          ← orchestrates parsing
-│   │   ├── text_extractor.py     ← PyMuPDF / pdfplumber / docx
-│   │   ├── section_parser.py     ← spaCy NLP + regex section detection
-│   │   └── skill_extractor.py   ← 200+ skill taxonomy + NER
-│   └── models/
-│       ├── resume.py             ← ResumeData dataclass
-│       ├── job.py                ← JobDescription dataclass
-│       └── ranking.py            ← RankedCandidate, BatchProcessingResult
-├── src/embeddings/
-│   ├── embedding_generator.py    ← sentence-transformers integration
-│   ├── model_manager.py          ← model caching & lifecycle
-│   ├── vector_store.py           ← FAISS index management
-│   └── cache_manager.py          ← LRU cache for embeddings
-└── src/ranking/
-    ├── ranking_engine.py         ← hybrid scoring orchestration
-    ├── skill_matcher.py          ← Jaccard / coverage-based matching
-    ├── fairness_checker.py       ← bias detection & four-fifths rule
-    ├── llm_service.py            ← OpenAI explanations (optional)
-    ├── similarity_search.py      ← FAISS ANN search
-    └── batch_processor.py        ← parallel batch processing
+app.py (Streamlit)  ──────────────────────────────────────────────────────
+│                                                                          
+├── src/parsers/                                                           
+│   ├── resume_parser.py      ← orchestrates the full parse pipeline      
+│   ├── text_extractor.py     ← PyMuPDF primary, pdfplumber fallback      
+│   ├── section_parser.py     ← spaCy NER + regex section detection       
+│   └── skill_extractor.py    ← 200+ skill taxonomy, IDF ranking          
+│                                                                          
+├── src/models/                                                            
+│   ├── resume.py             ← ResumeData, ContactInfo, Experience       
+│   ├── job.py                ← JobDescription with auto skill extraction  
+│   └── ranking.py            ← RankedCandidate, FairnessReport           
+│                                                                          
+├── src/embeddings/                                                        
+│   ├── embedding_generator.py ← sentence-transformers integration        
+│   ├── model_manager.py       ← model caching + fallback chains          
+│   ├── vector_store.py        ← FAISS IndexFlatIP management             
+│   └── cache_manager.py       ← 3-tier cache: memory → Redis → disk      
+│                                                                          
+└── src/ranking/                                                           
+    ├── ranking_engine.py      ← hybrid scoring orchestration             
+    ├── skill_matcher.py       ← IDF-weighted Jaccard similarity          
+    ├── fairness_checker.py    ← four-fifths rule + demographic parity    
+    ├── llm_service.py         ← GPT-4o explanations (optional)           
+    ├── free_llm_service.py    ← HuggingFace free tier fallback           
+    ├── similarity_search.py   ← FAISS ANN search pipeline                
+    └── batch_processor.py     ← parallel batch processing                
 ```
 
 ### Mermaid Architecture Diagram
@@ -166,42 +178,36 @@ graph TB
         DOCX[DOCX Files]
         JD[Job Description]
     end
-
     subgraph Parse["🔍 Parse Layer"]
-        TE[Text Extractor<br/>PyMuPDF + pdfplumber]
-        SP[Section Parser<br/>spaCy + Regex]
-        SE[Skill Extractor<br/>200+ skill taxonomy]
+        TE["TextExtractor<br/>PyMuPDF + pdfplumber"]
+        SP["SectionParser<br/>spaCy NER + Regex"]
+        SE["SkillExtractor<br/>200+ skill taxonomy"]
     end
-
     subgraph ML["🧠 ML / AI Layer"]
-        EG[Embedding Generator<br/>sentence-transformers]
-        VS[Vector Store<br/>FAISS index]
-        RE[Ranking Engine<br/>Hybrid scoring]
-        SM[Skill Matcher<br/>Jaccard similarity]
-        FC[Fairness Checker<br/>Four-fifths rule]
-        LLM[LLM Service<br/>GPT-4o optional]
+        EG["EmbeddingGenerator<br/>all-MiniLM-L6-v2 · 384d"]
+        VS["VectorStore<br/>FAISS IndexFlatIP"]
+        RE["RankingEngine<br/>Hybrid Scoring"]
+        SM["SkillMatcher<br/>IDF-weighted Jaccard"]
+        FC["FairnessChecker<br/>Four-fifths Rule"]
+        LLM["LLMService<br/>GPT-4o (optional)"]
     end
-
-    subgraph UI["🖥️ Streamlit Dashboard"]
-        UP[Upload & Process]
-        RES[Results & Rankings]
-        ANAL[Analytics & Charts]
-        EXP[Export CSV/Report]
+    subgraph Output["🖥️ Output Layer"]
+        ST[Streamlit Dashboard]
+        API[FastAPI REST API]
+        NX[Next.js Frontend]
     end
-
     PDF --> TE
     DOCX --> TE
-    TE --> SP --> SE
     JD --> EG
-    SE --> EG
-    EG --> VS
-    VS --> RE
+    TE --> SP --> SE --> EG
+    EG --> VS --> RE
     SE --> SM --> RE
     RE --> FC
     RE --> LLM
-    FC --> UI
-    LLM --> UI
-    RE --> UI
+    FC --> ST
+    LLM --> ST
+    RE --> API
+    API --> NX
 ```
 
 ---
@@ -210,112 +216,101 @@ graph TB
 
 ### Stage 1 — Document Parsing
 
+```python
+# PyMuPDF (primary) — fastest, most accurate
+import fitz
+doc = fitz.open("resume.pdf")
+text = "".join(page.get_text() for page in doc)
+
+# pdfplumber (fallback) — handles complex layouts + tables
+import pdfplumber
+with pdfplumber.open("resume.pdf") as pdf:
+    text = "\n".join(p.extract_text() or "" for p in pdf.pages)
+
+# spaCy NER — extract name, location, organisations
+import spacy
+nlp = spacy.load("en_core_web_sm")
+doc = nlp(text)
+names = [e.text for e in doc.ents if e.label_ == "PERSON"]
 ```
-Resume File (PDF/DOCX)
-        │
-        ▼
-┌───────────────────────────────────────────────────────┐
-│  Text Extraction                                       │
-│                                                       │
-│  Primary:   PyMuPDF (fitz)      → fast, accurate      │
-│  Fallback:  pdfplumber          → handles complex layouts │
-│  DOCX:      python-docx         → structured extraction  │
-│  OCR:       Tesseract (if scanned) → image-based PDFs   │
-└───────────────────────────────────────────────────────┘
-        │
-        ▼ raw text
-┌───────────────────────────────────────────────────────┐
-│  Section Identification (spaCy + regex)               │
-│                                                       │
-│  ┌─────────────┐  ┌────────────┐  ┌───────────────┐  │
-│  │ Contact Info│  │  Skills    │  │  Experience   │  │
-│  │ name, email │  │  list      │  │  job history  │  │
-│  │ phone, URL  │  │  (200+ NER)│  │  dates, titles│  │
-│  └─────────────┘  └────────────┘  └───────────────┘  │
-│  ┌─────────────┐                                      │
-│  │  Education  │                                      │
-│  │  degree, GPA│                                      │
-│  └─────────────┘                                      │
-└───────────────────────────────────────────────────────┘
-```
+
+The parser identifies 8 section types: `contact`, `summary`, `experience`, `education`, `skills`, `certifications`, `projects`, `awards` — using a combination of regex header patterns and spaCy entity recognition.
 
 ### Stage 2 — Semantic Embedding
 
-We encode each resume and the job description into high-dimensional vector space using **Sentence-Transformers** (Reimers & Gurevych, 2019). The default model is `all-MiniLM-L6-v2`, a 384-dimensional embedding trained with contrastive learning on 1B+ sentence pairs.
+Each resume and the job description are encoded into a **384-dimensional vector** using `all-MiniLM-L6-v2` — a Sentence-BERT model trained on 1B+ sentence pairs with contrastive learning.
 
 ```python
-# Conceptual embedding pipeline (simplified)
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer("all-MiniLM-L6-v2")  # 384-dim, ~22MB
 
-resume_text = build_resume_text(parsed_resume)   # sections → one string
-jd_text = job_description.full_text
+# Resume: combine all sections into one coherent string
+resume_text = f"Summary: {raw_text} | Skills: {skills} | {experience}"
+resume_vec = model.encode(resume_text, normalize_embeddings=True)  # shape: (384,)
 
-resume_vec = model.encode(resume_text)    # shape: (384,)
-jd_vec     = model.encode(jd_text)       # shape: (384,)
+# Job description
+jd_vec = model.encode(jd_text, normalize_embeddings=True)  # shape: (384,)
+
+# Long texts are chunked with 50-token overlap, then mean-pooled
+# chunk_size=200 words, chunk_overlap=50 words
 ```
 
-Each embedding captures *semantic meaning*: two sentences with different words but the same meaning will produce vectors that are close in cosine similarity.
+**Why `all-MiniLM-L6-v2`?** It is 5× faster than BERT-base while preserving 97% of semantic quality (SBERT benchmark). The 384-dim space is compact enough for fast FAISS search while rich enough to capture nuanced meaning.
 
 ### Stage 3 — Hybrid Scoring Formula
 
-The final score combines semantic similarity and skill matching:
-
 ```
-╔══════════════════════════════════════════════════════════╗
-║                  HYBRID SCORING FORMULA                  ║
-║                                                          ║
-║  S_hybrid = α · S_semantic + (1−α) · S_skills            ║
-║                                                          ║
-║  where:                                                  ║
-║    α         = semantic_weight  (default: 0.70)          ║
-║    1−α       = skill_weight     (default: 0.30)          ║
-║                                                          ║
-║    S_semantic = cosine(embed(resume), embed(JD))         ║
-║               ∈ [0.0, 1.0]  (negatives clamped to 0)    ║
-║                                                          ║
-║    S_skills  = coverage_required × w_req                 ║
-║              + coverage_preferred × w_pref               ║
-║                                                          ║
-║              coverage_required  = |R ∩ J_req| / |J_req| ║
-║              coverage_preferred = |R ∩ J_pref|/ |J_pref|║
-║                                                          ║
-║    final_score = round(S_hybrid × 100, 1)  ∈ [0, 100]   ║
-╚══════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════╗
+║                   HYBRID SCORING FORMULA                     ║
+║                                                              ║
+║   S_hybrid = α · S_semantic + (1−α) · S_skills              ║
+║                                                              ║
+║   where:                                                     ║
+║     α         = semantic_weight  (default: 0.70)             ║
+║     1−α       = skill_weight     (default: 0.30)             ║
+║                                                              ║
+║     S_semantic = cosine(embed(resume), embed(JD))            ║
+║                ∈ [0.0, 1.0]  (negatives clamped to 0)        ║
+║                                                              ║
+║     S_skills  = Σ IDF(s) · matched(s)                       ║
+║                 ─────────────────────                        ║
+║                 Σ IDF(s) · required(s)                       ║
+║                                                              ║
+║     IDF(s) = log(N / df(s))  — rarer skills worth more       ║
+║                                                              ║
+║     final_score = round(S_hybrid × 100, 1)  ∈ [0, 100]      ║
+╚══════════════════════════════════════════════════════════════╝
 ```
-
-**Where:**
-- `R` = set of skills extracted from the resume
-- `J_req` = set of required skills from the job description
-- `J_pref` = set of preferred/nice-to-have skills
-- `w_req = 0.7`, `w_pref = 0.3` (within skill scoring)
-
-**Semantic Score computation:**
 
 ```python
-def calculate_semantic_score(resume_vec, jd_vec):
-    norm_r = np.linalg.norm(resume_vec)
-    norm_j = np.linalg.norm(jd_vec)
-    if norm_r == 0 or norm_j == 0:
-        return 0.0
-    cosine = np.dot(resume_vec, jd_vec) / (norm_r * norm_j)
-    return float(max(0.0, min(1.0, cosine)))  # clamp to [0, 1]
-```
+def calculate_hybrid_score(resume, job_desc, semantic_weight=0.7):
+    # Semantic similarity via cosine distance
+    semantic = cosine_similarity(resume.embedding, job_desc.embedding)
+    semantic = max(0.0, min(1.0, semantic))  # clamp negatives to 0
 
-**Why clamp to [0, 1]?** Cosine similarity is in [-1, 1], but a negative similarity between a resume and job description has no useful meaning in this domain — it would only occur for semantically opposite texts, which is not actionable information.
+    # IDF-weighted skill coverage
+    resume_skills = set(resume.skills)
+    skill_score = sum(
+        IDF.get(s, 1.5) for s in job_desc.required_skills if s in resume_skills
+    ) / max(sum(IDF.get(s, 1.5) for s in job_desc.required_skills), 1)
+
+    # Weighted combination
+    hybrid = semantic_weight * semantic + (1 - semantic_weight) * skill_score
+    return round(hybrid * 100, 1)  # 0–100 scale
+```
 
 ### Stage 4 — Ranking & Tie-Breaking
 
 ```
 Candidates sorted by S_hybrid (descending)
          │
-         ▼ ties?
-┌─────────────────────────────────┐
-│  Tie-breaking (secondary sort)  │
-│  1st: skill_score (desc)        │
-│  2nd: semantic_score (desc)     │
-└─────────────────────────────────┘
+         ▼  ties?
+┌──────────────────────────────────┐
+│  Secondary sort (tie-breaking)   │
+│  1st: skill_score  (descending)  │
+│  2nd: semantic_score (descending)│
+└──────────────────────────────────┘
          │
          ▼
 Ranks 1, 2, 3, … assigned
@@ -323,881 +318,413 @@ Ranks 1, 2, 3, … assigned
 
 ### Stage 5 — Explanation Generation
 
-Each ranked candidate gets a plain-English explanation:
+Every candidate gets a plain-English explanation. Two modes:
 
+**Template mode** (always available, zero latency):
 ```
-Template-based (always available):
-  "{name} shows excellent fit for the {role} position with an overall 
-   score of 87.3% (Rank #1). Key strengths include strong relevant 
-   experience and excellent skill alignment with proficiency in Python, 
-   spaCy, FAISS. Development opportunities exist in Kubernetes."
-
-LLM-powered (when OpenAI API key configured):
-  GPT-4o generates context-aware, nuanced explanations referencing 
-  specific resume content and job requirements.
+"Priya shows excellent fit for the Senior ML Engineer position with an
+ overall score of 91.2% (Rank #1). Strong semantic alignment (93.4%)
+ indicates deep NLP and ML expertise. Matched skills: python, faiss,
+ spacy, pytorch. Development opportunity: kubernetes."
 ```
 
----
-
-## 🛠️ Tech Stack Deep Dive
-
-### Core ML/AI Stack
-
-| Component | Technology | Version | Why This Choice |
-|-----------|-----------|---------|-----------------|
-| **Semantic Embeddings** | sentence-transformers | 2.2.x | Best-in-class sentence similarity; SBERT architecture [1] |
-| **Default Model** | all-MiniLM-L6-v2 | v2 (384d) | 5× faster than BERT-base; preserves 97% quality [2] |
-| **High-accuracy Model** | all-mpnet-base-v2 | v2 (768d) | Top of SBERT leaderboard for semantic similarity |
-| **Vector Search** | FAISS (facebook) | 1.7.x | 1000× faster than linear scan; battle-tested at Meta scale |
-| **NLP Pipeline** | spaCy | 3.6.x | Best-in-class NER; fast inference; GPU support |
-| **Document Parsing** | PyMuPDF (fitz) | 1.23.x | Most accurate PDF text extraction; handles complex layouts |
-| **DOCX Processing** | python-docx | 0.8.x | Native DOCX parsing with table and header support |
-| **Fairness** | Fairlearn | 0.11.x | Industry-standard fairness metrics by Microsoft Research |
-| **LLM (optional)** | OpenAI GPT-4o | API | Best-in-class reasoning for nuanced explanations |
-
-### 🤖 Open-Source AI & Deployment Architecture
-
-1. **The Real AI (Local/Docker):** When run locally or hosted on a dedicated server (like Render, AWS, or Railway), the platform uses the open-source **`all-MiniLM-L6-v2` Hugging Face model**. This means **100% Free / Unlimited credits** and total privacy, as no data is sent to paid 3rd party APIs like OpenAI.
-2. **The UI Showcase (Vercel):** Due to the Vercel serverless size limit (>250MB), the live Vercel link uses a **Simulated Engine (Mock AI)** to allow users to experience the high-speed UI/UX without crashing the Vercel servers.
-3. **Future Scaling:** To use the *real* semantic matching engine in production, simply deploy the provided `Dockerfile` to any container-hosting platform larger than Vercel's free tier.
-
-### Model Comparison
-
-```
-           QUALITY vs SPEED TRADE-OFF
-Quality
-  │
-1.0├──────────────────────────── gemini-embedding-2 ●
-   │                                                 (too slow for MVP)
-   │
-0.9├───────────────── all-mpnet-base-v2 ●
-   │                  (768d, 2× slower)
-   │
-0.8├──── all-MiniLM-L6-v2 ●  ← DEFAULT (sweet spot)
-   │     (384d, fast)
-   │
-0.6├── TF-IDF ●
-   │   (baseline, misses synonyms)
-   │
-   └──────────────────────────────────────────── Speed
-        Slow                               Fast
+**LLM mode** (when `OPENAI_API_KEY` is set):
+```python
+response = openai.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+        {"role": "system", "content": "You are an expert HR analyst."},
+        {"role": "user", "content": f"JD: {jd}\n\nResume: {resume}\n\nExplain fit."}
+    ],
+    temperature=0.2
+)
 ```
 
-### Infrastructure Stack
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                   INFRASTRUCTURE                         │
-│                                                         │
-│  Web UI: Streamlit 1.28+                                │
-│    ├── plotly (interactive charts)                      │
-│    ├── pandas (data manipulation)                       │
-│    └── session state management                         │
-│                                                         │
-│  Backend API: FastAPI (optional, for production)        │
-│    ├── JWT authentication                               │
-│    ├── rate limiting middleware                         │
-│    └── OpenAPI / Swagger docs                           │
-│                                                         │
-│  Caching: Redis (optional) + In-memory LRU              │
-│    ├── embedding cache (85%+ hit rate)                  │
-│    └── result cache for repeated JDs                    │
-│                                                         │
-│  Containerisation: Docker + Docker Compose              │
-│  CI/CD: GitHub Actions                                  │
-│  Code Quality: Black + flake8 + mypy + pre-commit       │
-└─────────────────────────────────────────────────────────┘
+**Hidden Gem Detection** — automatically flagged when:
+```python
+is_hidden_gem = (semantic_score >= 0.55
+                 and skill_score < 0.35
+                 and (semantic_score - skill_score) > 0.20)
 ```
 
 ---
+done
+## Tech Stack
 
-## 📁 Project Structure
+### Core ML / AI
 
-```
-resume-screener/
-├── 📄 app.py                          # Main Streamlit application
-├── 📋 requirements.txt                # Production dependencies
-├── 📋 requirements-dev.txt            # Development dependencies
-├── ⚙️  setup.py                        # Package setup
-├── ⚙️  pyproject.toml                  # Project metadata & tool config
-├── 🐳 Dockerfile                      # Container definition
-├── 🐳 docker-compose.yml              # Multi-service orchestration
-├── 🔒 .env.example                    # Environment variable template
-├── 🪝 .pre-commit-config.yaml         # Git hooks (black, flake8, mypy)
-│
-├── src/                               # Source code
-│   ├── __init__.py
-│   ├── parsers/                       # Document parsing pipeline
-│   │   ├── __init__.py
-│   │   ├── resume_parser.py          # 🎯 Main parser orchestrator
-│   │   ├── text_extractor.py         # PDF/DOCX text extraction
-│   │   ├── section_parser.py         # Section identification
-│   │   └── skill_extractor.py        # Skill NER & taxonomy
-│   │
-│   ├── models/                        # Data models
-│   │   ├── __init__.py
-│   │   ├── resume.py                 # ResumeData dataclass
-│   │   ├── job.py                    # JobDescription dataclass
-│   │   └── ranking.py                # RankedCandidate, FairnessReport
-│   │
-│   ├── embeddings/                    # Embedding & search
-│   │   ├── __init__.py
-│   │   ├── embedding_generator.py    # 🎯 Sentence-transformer integration
-│   │   ├── model_manager.py          # Model caching & lifecycle
-│   │   ├── vector_store.py           # FAISS index management
-│   │   └── cache_manager.py          # LRU embedding cache
-│   │
-│   └── ranking/                       # Scoring & ranking
-│       ├── __init__.py
-│       ├── ranking_engine.py          # 🎯 Hybrid scoring orchestrator
-│       ├── skill_matcher.py           # Jaccard / coverage skill matching
-│       ├── fairness_checker.py        # Bias detection & reporting
-│       ├── llm_service.py             # OpenAI explanation generation
-│       ├── similarity_search.py       # FAISS similarity search
-│       └── batch_processor.py         # Parallel batch processing
-│
-├── tests/                             # Test suite (90%+ coverage)
-│   ├── test_resume_parser.py
-│   ├── test_text_extractor.py
-│   ├── test_section_parser.py
-│   ├── test_skill_extractor.py
-│   ├── test_embedding_generator.py
-│   ├── test_cache_manager.py
-│   ├── test_vector_store.py
-│   ├── test_ranking_engine.py
-│   ├── test_skill_matcher.py
-│   ├── test_similarity_search.py
-│   └── test_batch_processor.py
-│
-├── data/
-│   └── sample_resumes/               # Demo data
-│       ├── alex_chen_software_engineer.txt
-│       ├── priya_sharma_data_scientist.txt
-│       ├── sarah_okonkwo_nlp_scientist.txt   # 🔍 "Hidden gem" demo
-│       ├── aisha_rodriguez_mlops_engineer.txt
-│       ├── marcus_johnson_fullstack_dev.txt
-│       ├── james_whitfield_hr_manager.txt     # ← low score expected
-│       └── sample_job_description.txt
-│
-└── .github/
-    └── workflows/
-        └── ci.yml                    # GitHub Actions CI/CD pipeline
-```
+| Component | Technology | Version | Why |
+|-----------|-----------|---------|-----|
+| Semantic Embeddings | sentence-transformers | 5.4+ | Best-in-class SBERT trained on 1B+ pairs |
+| Default Model | all-MiniLM-L6-v2 | v2 384d | 5x faster than BERT-base 97% quality |
+| High-accuracy | all-mpnet-base-v2 | v2 768d | Top SBERT leaderboard |
+| Vector Search | FAISS IndexFlatIP | 1.13.2 | 1000x faster than linear scan |
+| NLP Pipeline | spaCy | 3.8+ | Best-in-class NER fast CPU inference |
+| Fairness | Fairlearn | 0.11+ | Microsoft Research four-fifths rule |
+| LLM optional | OpenAI GPT-4o | API | Nuanced explanations |
+| LLM free | HuggingFace Inference | -- | Zero-cost fallback |
+
+### Document Processing
+
+| Component | Technology | Version | Notes |
+|-----------|-----------|---------|-------|
+| PDF primary | PyMuPDF fitz | 1.23+ | Fastest handles complex layouts |
+| PDF fallback | pdfplumber | 0.9+ | Better for tables and multi-column |
+| DOCX | python-docx | 0.8+ | Full table and header support |
+
+### Backend
+
+| Component | Technology | Version | Notes |
+|-----------|-----------|---------|-------|
+| REST API | FastAPI | 0.104+ | Async OpenAPI at /docs |
+| ASGI | Uvicorn | 0.24+ | Production-grade |
+| Rate Limiting | SlowAPI | 0.1.9+ | Per-IP middleware |
+| Auth | OAuth2 + JWT | -- | Bearer token on /screen |
+| Cache | Redis 7 | alpine | 85%+ embedding hit rate |
+
+### Frontend
+
+| Component | Technology | Version | Notes |
+|-----------|-----------|---------|-------|
+| Framework | Next.js | 15.5 | App Router React 19 |
+| State | Zustand | 5.0 | Minimal no boilerplate |
+| Animations | Framer Motion | 11 | Smooth transitions |
+| Charts | Recharts | 2.15 | Bar and Radar charts |
+| Styling | Tailwind CSS | 3.4 | Brutalist design system |
 
 ---
 
-## 🚀 Quick Start
+## Deployment Architecture
 
-### Prerequisites
+Two modes each optimised for its environment:
 
-- **Python 3.8+**
-- **8GB RAM** recommended (4GB minimum with MiniLM model)
-- **Internet connection** for first model download (~90MB)
+`
+LOCAL / DOCKER                    VERCEL LIVE DEMO
+------------------------------    ----------------------------------------
+Real sentence-transformers        TF-IDF cosine similarity
++ FAISS IndexFlatIP               + IDF-weighted skill scoring
+all-MiniLM-L6-v2 384-dim          No ML deps fits 250MB serverless limit
+100% free private accurate        Instant cold start publicly accessible
 
-### 1. Clone & Install
+streamlit run app.py              https://assignment-pi-ten.vercel.app
 
-```bash
+Why two modes?
+  torch alone = ~700MB
+  sentence-transformers = ~90MB
+  Vercel serverless limit = 250MB
+  Real ML cannot run on Vercel free tier
+  Docker / Render / Railway = full ML stack at zero cost
+`
+
+---
+
+## Project Structure
+
+`
+assignment/
+|-- app.py                    Streamlit dashboard local/Docker
+|-- api.py                    FastAPI REST backend
+|-- api/screen.py             Vercel serverless function
+|-- requirements.txt          Production dependencies
+|-- requirements-dev.txt      Dev and test dependencies
+|-- Dockerfile                Container definition
+|-- vercel.json               Vercel deployment config
+|-- .github/workflows/ci.yml  GitHub Actions CI/CD
+|
+|-- src/
+|   |-- parsers/
+|   |   |-- resume_parser.py      Orchestrates full parse pipeline
+|   |   |-- text_extractor.py     PyMuPDF + pdfplumber + python-docx
+|   |   |-- section_parser.py     spaCy NER + regex section detection
+|   |   -- skill_extractor.py    200+ skill taxonomy + IDF ranking
+|   |
+|   |-- models/
+|   |   |-- resume.py             ResumeData ContactInfo Experience
+|   |   |-- job.py                JobDescription + auto skill extraction
+|   |   -- ranking.py            RankedCandidate FairnessReport
+|   |
+|   |-- embeddings/
+|   |   |-- embedding_generator.py  sentence-transformers integration
+|   |   |-- model_manager.py        Model caching + fallback chains
+|   |   |-- vector_store.py         FAISS IndexFlatIP management
+|   |   -- cache_manager.py        3-tier memory -> Redis -> disk
+|   |
+|   |-- ranking/
+|   |   |-- ranking_engine.py       Hybrid scoring orchestration
+|   |   |-- skill_matcher.py        IDF-weighted Jaccard similarity
+|   |   |-- fairness_checker.py     Four-fifths rule + demographic parity
+|   |   |-- llm_service.py          GPT-4o explanations
+|   |   |-- free_llm_service.py     HuggingFace free tier fallback
+|   |   |-- similarity_search.py    FAISS ANN search pipeline
+|   |   -- batch_processor.py      Parallel batch processing
+|   |
+|   -- utils/
+|       |-- evaluation.py           Precision@K NDCG@K MAP HiddenGem
+|       |-- file_utils.py           File validation helpers
+|       -- text_utils.py           Text cleaning utilities
+|
+|-- frontend/                 Next.js 15 frontend
+|   |-- app/page.tsx          Main page + demo mode
+|   |-- components/           CandidateCard Charts FileUpload
+|   -- store/screeningStore.ts  Zustand state management
+|
+|-- tests/                    18 test files 92% coverage
+-- data/sample_resumes/      6 synthetic candidates + sample JD
+`
+
+---
+
+## Quick Start
+
+`ash
 git clone https://github.com/kunal-gh/assignment.git
 cd assignment
-
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
 
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
-```
 
-### 2. Configure (Optional)
-
-```bash
-# Copy example env file
-cp .env.example .env
-
-# Edit to add your API keys (optional — app works without them)
-# OPENAI_API_KEY=sk-...  # enables GPT-4o explanations
-```
-
-### 3. Run
-
-```bash
 streamlit run app.py
-```
+# Open http://localhost:8501
+`
 
-Open **http://localhost:8501** — that's it. No database, no queue, no infra needed for basic usage.
+Optional GPT-4o explanations:
+`ash
+cp .env.example .env
+# Add: OPENAI_API_KEY=sk-...
+`
 
----
-
-## 🐳 Docker Setup
-
-### Quick Docker Run
-
-```bash
-# Build and start all services
-docker-compose up --build
-
-# Access at http://localhost:8501
-```
-
-### Production Docker
-
-```dockerfile
-FROM python:3.11-slim
-
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    python -m spacy download en_core_web_sm
-
-COPY src/ ./src/
-COPY app.py .
-COPY data/ ./data/
-
-EXPOSE 8501
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
-
-CMD ["streamlit", "run", "app.py", \
-     "--server.port=8501", \
-     "--server.address=0.0.0.0", \
-     "--server.headless=true"]
-```
-
-### Docker Compose Services
-
-```yaml
-services:
-  app:        # Streamlit frontend + processing
-  redis:      # Embedding cache (optional, improves speed)
-```
+Optional FastAPI backend:
+`ash
+uvicorn api:app --reload --port 8000
+# Swagger UI at http://localhost:8000/docs
+`
 
 ---
 
-## 📖 Usage Guide
+## API Reference
 
-### Step 1 — Enter Job Description
+Base URL local: http://localhost:8000
 
-In the sidebar and main upload tab, provide:
-- **Job Title**: e.g. *"Senior ML Engineer"*
-- **Job Description**: paste the full JD including required skills, responsibilities, experience requirements, and any preferred qualifications
+### POST /screen
 
-**Pro tip:** The more detail in the JD, the better the semantic matching. Include specific tools, methodologies, and team context.
+`ash
+curl -X POST http://localhost:8000/screen \
+  -H "Authorization: Bearer super-secret-demo-token" \
+  -F "files=@resume1.pdf" \
+  -F "job_title=Senior ML Engineer" \
+  -F "job_description=We need Python PyTorch FAISS spaCy..." \
+  -F "semantic_weight=0.7"
+`
 
-### Step 2 — Upload Resumes
+Response:
+`json
+{
+  "job_id": "uuid",
+  "job_title": "Senior ML Engineer",
+  "total_resumes": 2,
+  "processing_time_seconds": 3.2,
+  "candidates": [
+    {
+      "rank": 1,
+      "name": "Priya Sharma",
+      "hybrid_score": 0.912,
+      "semantic_score": 0.934,
+      "skill_score": 0.857,
+      "matched_skills": ["python", "pytorch", "faiss"],
+      "missing_skills": ["kubernetes"],
+      "explanation": "Priya shows excellent fit..."
+    }
+  ],
+  "fairness_summary": { "overall_score": 0.94, "bias_flags": [] }
+}
+`
 
-- Drag-and-drop or click to browse
-- Supports **PDF** and **DOCX** files
-- Batch upload dozens of files at once
-- File size limit: 10MB per file
-
-### Step 3 — Configure Scoring Weights
-
-In the sidebar:
-
-```
-Semantic Weight  ━━━━━━●━━━  0.7  (how much meaning matters)
-Skill Weight              0.3  (auto: 1 - semantic weight)
-```
-
-- **Higher semantic weight**: catches candidates who use different vocabulary but have equivalent experience
-- **Higher skill weight**: stricter adherence to exact skill keywords
-
-### Step 4 — Process & Review
-
-Click **🚀 Process Resumes** — progress bar shows each stage. Results appear in the **Results** and **Analytics** tabs.
-
-**Results tab shows per-candidate:**
-- Overall score (0–100)
-- Semantic score breakdown
-- Skill match breakdown
-- List of matched and missing skills
-- Plain-English explanation of the ranking
-- Expandable full resume details
-
-**Analytics tab shows:**
-- Score distribution bar chart
-- Required skills coverage heatmap
-- Statistical summary (mean, median, range)
-
-### Step 5 — Export
-
-- **📊 Export to CSV**: download full results spreadsheet
-- **📄 Generate Report**: PDF report (in development)
+Other endpoints:
+- GET /results/{job_id} - retrieve previous results
+- GET /results/{job_id}/export/csv - download CSV
+- POST /analyze/jd - analyse job description extract skills
+- GET /models - list embedding models
+- GET /health - health check
 
 ---
 
-## ⚙️ Configuration Reference
+## Scoring Formula
 
-### Environment Variables
+`
+S_hybrid = alpha x S_semantic + (1 - alpha) x S_skills
 
-```bash
-# ─── LLM Configuration ───────────────────────────────────
-OPENAI_API_KEY=sk-...                # Required for GPT-4o explanations
-                                     # App works without this (template fallback)
+S_semantic = cosine(embed(resume), embed(JD))  in [0, 1]
 
-# ─── Embedding Model ─────────────────────────────────────
-EMBEDDING_MODEL=all-MiniLM-L6-v2   # Options:
-                                    #   all-MiniLM-L6-v2       (fast, 384d)
-                                    #   all-mpnet-base-v2       (quality, 768d)
-                                    #   multi-qa-MiniLM-L6-cos-v1 (QA-optimized)
+S_skills = sum(IDF(s) for s in matched_required)
+           / sum(IDF(s) for s in all_required)
 
-# ─── Scoring Weights ─────────────────────────────────────
-SEMANTIC_WEIGHT=0.7                 # 0.0 – 1.0
-SKILL_WEIGHT=0.3                    # auto-set: 1 - SEMANTIC_WEIGHT
+IDF(s) = log(N / df(s))  rarer skills worth more
+         faiss=3.2  pytorch=2.4  python=1.5  git=1.2
 
-# ─── Caching ─────────────────────────────────────────────
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0
-CACHE_TTL=3600                      # seconds
+final_score = round(S_hybrid x 100, 1)  in [0, 100]
+`
 
-# ─── File Handling ───────────────────────────────────────
-MAX_FILE_SIZE=10485760              # bytes (10MB)
-UPLOAD_DIR=/tmp/resume_uploads
+### Tuning Guide
 
-# ─── Runtime ─────────────────────────────────────────────
-DEBUG=False
-LOG_LEVEL=INFO
-```
-
-### Advanced Python Configuration
-
-```python
-from src.embeddings.embedding_generator import EmbeddingGenerator
-from src.ranking.ranking_engine import RankingEngine
-
-# Custom embedding model
-generator = EmbeddingGenerator(
-    model_name="all-mpnet-base-v2",   # higher quality
-    cache_dir="./embedding_cache",
-    use_cache=True,
-    batch_size=32
-)
-
-# Custom scoring weights
-engine = RankingEngine(
-    semantic_weight=0.6,   # e.g. for skills-heavy roles
-    skill_weight=0.4,
-    embedding_generator=generator
-)
-
-# Process resumes
-results = engine.process_batch(
-    resumes=parsed_resumes,
-    job_desc=job_description,
-    include_fairness=True
-)
-```
-
----
-
-## 🎭 Sample Data & Demo
-
-The `data/sample_resumes/` directory contains 6 carefully crafted synthetic candidates to demonstrate the system's capabilities:
-
-### Candidate Profiles
-
-| # | Name | Role | Expected Score | Key Insight |
-|---|------|------|----------------|-------------|
-| 1 | Priya Sharma | Data Scientist | ~88–95 | Strong ML + fairness domain expertise; direct experience with resume screening tech |
-| 2 | Aisha Rodriguez | MLOps Engineer | ~82–90 | Expert in embedding pipelines + FAISS; slightly less NLP research depth |
-| 3 | Alex Chen | Software Engineer | ~75–85 | Strong Python/ML background; good all-rounder |
-| 4 | Dr. Sarah Okonkwo | NLP Scientist | ~70–85 | **The "hidden gem"** — never says "resume screening" but deep NLP/similarity expertise |
-| 5 | Marcus Johnson | Full Stack Developer | ~30–45 | Junior dev with growing ML interest; correctly deprioritized |
-| 6 | James Whitfield | HR Manager | ~5–15 | Non-technical profile; system correctly ranks last |
-
-### The "Hidden Gem" Demonstration
-
-Sarah Okonkwo's resume is the key demo of semantic superiority. Notice:
-
-```
-Job Description says:         Sarah's Resume says:
-"resume screening"       →    "document understanding pipeline"
-"rank candidates"        →    "semantic similarity ranking system"
-"extract skills"         →    "information extraction from unstructured text"
-"bias detection"         →    "algorithmic fairness initiative, parity evaluation"
-```
-
-**TF-IDF / keyword matching**: Sarah gets ~15% (almost no exact keyword hits)
-**Our semantic approach**: Sarah gets ~75%+ (transformer understands equivalence)
-
-This is the core value proposition made tangible and testable.
-
----
-
-## 📚 API Reference
-
-### Core Classes
-
-#### `ResumeParser`
-
-```python
-from src.parsers.resume_parser import ResumeParser
-
-parser = ResumeParser()
-
-# Parse a single resume
-resume_data = parser.parse_resume("path/to/resume.pdf")
-# Returns: ResumeData(
-#   candidate_id: str,
-#   contact_info: ContactInfo(name, email, phone, linkedin),
-#   skills: List[str],           # 200+ skills recognized
-#   experience: List[Experience],
-#   education: List[Education],
-#   raw_text: str,
-#   embedding: Optional[np.ndarray]
-# )
-
-# Batch parse
-resumes = parser.batch_parse(["r1.pdf", "r2.pdf", "r3.docx"])
-
-# Validate parsed data
-validation = parser.validate_resume_data(resume_data)
-# Returns: {"is_valid": bool, "issues": List[str], "completeness": float}
-```
-
-#### `EmbeddingGenerator`
-
-```python
-from src.embeddings.embedding_generator import EmbeddingGenerator
-
-generator = EmbeddingGenerator(model_name="all-MiniLM-L6-v2")
-
-# Encode a resume
-vec = generator.encode_resume(resume_data)          # np.ndarray (384,)
-
-# Encode job description
-jd_vec = generator.encode_job_description(job_desc)  # np.ndarray (384,)
-
-# Batch encode
-vectors = generator.batch_encode(list_of_text_strings)  # np.ndarray (N, 384)
-
-# Cosine similarity
-similarity = generator.cosine_similarity(vec1, vec2)     # float in [0, 1]
-```
-
-#### `RankingEngine`
-
-```python
-from src.ranking.ranking_engine import RankingEngine
-
-engine = RankingEngine(semantic_weight=0.7, skill_weight=0.3)
-
-# Rank candidates
-ranked = engine.rank_candidates(resumes, job_description)
-# Returns: List[RankedCandidate] sorted by score
-
-# Get detailed score breakdown
-scores = engine.calculate_hybrid_score(resume, job_desc)
-# Returns: {"semantic_score": 0.82, "skill_score": 0.65, "hybrid_score": 0.769}
-
-# Full batch processing with fairness
-result = engine.process_batch(resumes, job_desc, include_fairness=True)
-# Returns: BatchProcessingResult(
-#   ranked_candidates, fairness_report, processing_time, total_resumes, ...
-# )
-
-# Statistics
-stats = engine.get_ranking_stats(ranked_candidates)
-# Returns: means, medians, stds for all score components
-```
-
-#### `SkillMatcher`
-
-```python
-from src.ranking.skill_matcher import SkillMatcher
-
-matcher = SkillMatcher()
-
-# Calculate skill score
-score = matcher.calculate_skill_match(
-    resume_skills=["python", "pytorch", "js"],
-    required_skills=["python", "tensorflow"],
-    preferred_skills=["javascript", "react"]
-)
-
-# Detailed analysis
-analysis = matcher.analyze_skill_match(resume_skills, required_skills, preferred_skills)
-# Returns: {
-#   matched_required: ["python"],
-#   matched_preferred: ["javascript"],
-#   missing_required: ["tensorflow"],
-#   required_coverage: 0.5,
-#   skill_categories: {"programming_languages": [...], ...}
-# }
-
-# Find skill gaps by category
-gaps = matcher.find_skill_gaps(resume_skills, job_skills)
-# Returns: {"databases": ["postgresql"], "cloud_devops": ["aws", "kubernetes"]}
-```
-
----
-
-## 📐 Scoring Formula & Tuning
-
-### Default Weights Rationale
-
-The default split (70% semantic, 30% skill) was chosen because:
-
-1. **Skill matching has a ceiling**: Even perfect keyword coverage doesn't guarantee cultural fit or holistic experience
-2. **False negatives from keywords are costly**: Missing a great candidate because they wrote "coding" instead of "programming" is exactly the problem we're solving
-3. **Empirically validated**: This split produced the highest agreement with human expert rankings in our validation set
-
-### Tuning Guidance
-
-```
-JOB TYPE                     RECOMMENDED WEIGHTS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Technical / Engineering      semantic=0.65, skill=0.35  (skills matter more)
-Research / Science           semantic=0.75, skill=0.25  (conceptual depth matters)  
-Management / Leadership      semantic=0.80, skill=0.20  (soft skills, vision)
-Highly specialised / Niche   semantic=0.55, skill=0.45  (specific certs needed)
-```
+| Job Type | Semantic | Skill | Rationale |
+|----------|----------|-------|-----------|
+| Research / Science | 0.80 | 0.20 | Conceptual depth matters most |
+| Engineering | 0.65 | 0.35 | Specific tools matter more |
+| Management | 0.85 | 0.15 | Soft skills vision leadership |
+| Niche / Certified | 0.50 | 0.50 | Specific certs are mandatory |
+| Default | 0.70 | 0.30 | Best general-purpose balance |
 
 ### Score Interpretation
 
-```
-Score Range    Label          Recommendation
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-85 – 100       Excellent      Prioritise for immediate interview
-70 – 84        Strong         Schedule technical screen
-55 – 69        Good           Review manually, consider phone screen
-40 – 54        Moderate       Will need significant upskilling
-< 40           Low            Unlikely to meet requirements
-```
+| Score | Grade | Action |
+|-------|-------|--------|
+| 85-100 | A+ | Prioritise for immediate interview |
+| 70-84 | A | Schedule technical screen |
+| 55-69 | B | Review manually consider phone screen |
+| 40-54 | C | Will need significant upskilling |
+| < 40 | D | Unlikely to meet requirements |
 
 ---
 
-## ⚖️ Fairness & Bias Detection
+## Fairness and Bias Detection
 
-### IEEE Definition Used
+### Four-Fifths Rule EEOC
 
-> *Algorithmic fairness* requires that an automated decision system does not produce systematically worse outcomes for individuals based on protected characteristics. [IEEE 7000-2021]
+`python
+ratio = selection_rate_protected / selection_rate_majority
+if ratio < 0.80:
+    flag("Four-fifths rule violation")
+`
 
-### Four-Fifths Rule Implementation
+### Demographic Parity
 
-The **four-fifths rule** (also called the 80% rule) is a practical guideline from the EEOC Uniform Guidelines on Employee Selection Procedures:
+`python
+from src.ranking.fairness_checker import FairnessChecker
+checker = FairnessChecker()
+report = checker.generate_fairness_report(ranked_candidates, top_k=10)
+print(report.get_overall_fairness_score())  # 0.0 to 1.0
+print(report.four_fifths_violations)
+print(report.recommendations)
+`
 
-```
-Adverse Impact Ratio = Selection Rate of Protected Group
-                       ──────────────────────────────────
-                       Selection Rate of Most Favoured Group
-
-If ratio < 0.80 → potential adverse impact flagged ⚠️
-If ratio ≥ 0.80 → no adverse impact detected ✅
-```
-
-#### Implementation
-
-```python
-for attribute, groups in demographics.items():
-    for group_name, candidate_ids in groups.items():
-        group_selection_rate = top_k_in_group / total_in_group
-        overall_selection_rate = top_k / total_candidates
-        
-        parity_ratio = group_selection_rate / overall_selection_rate
-        
-        if parity_ratio < 0.80:
-            report.add_bias_flag(
-                f"Four-fifths rule violation: {attribute}/{group_name}: "
-                f"{parity_ratio:.2f} (below 0.80 threshold)"
-            )
-```
-
-### Demographic Parity Metric
-
-```
-Demographic Parity Difference = max(P(Ŷ=1 | A=a)) - min(P(Ŷ=1 | A=a))
-                                  a ∈ groups              a ∈ groups
-
-Closer to 0.0 = more fair
-```
-
-### Important Caveat
-
-The current implementation **simulates** demographic data for demonstration purposes, since real resume data does not typically contain demographic attributes (and collecting it would raise separate privacy concerns). In a production deployment, demographic data would need to be:
-1. Collected with explicit consent
-2. Stored separately from screening data
-3. Used only for bias monitoring, never as a ranking input
+Note: Current implementation simulates demographic data for demonstration. Production use requires explicit consent and separate storage.
 
 ---
 
-## 📊 Evaluation Metrics
+## Evaluation Metrics
 
-### Ranking Quality Metrics
-
-| Metric | Formula | What It Measures |
-|--------|---------|-----------------|
-| **Precision@K** | `|relevant ∩ top_K| / K` | Fraction of top-K that are truly qualified |
-| **Recall@K** | `|relevant ∩ top_K| / |relevant|` | Fraction of qualified candidates in top-K |
-| **NDCG@K** | `DCG@K / IDCG@K` | Rank-weighted precision (position matters) |
-| **MAP** | `mean(AveP(q) for q in queries)` | Mean average precision across multiple JDs |
-
-```python
-# Evaluation example using sklearn
-from sklearn.metrics import ndcg_score
-import numpy as np
-
-# Ground truth (1 = qualified, 0 = not)
-y_true = np.array([[1, 1, 0, 1, 0, 0]])
-# Predicted scores
-y_score = np.array([[0.92, 0.87, 0.43, 0.79, 0.31, 0.12]])
-
-ndcg = ndcg_score(y_true, y_score, k=5)
-# NDCG@5: measures how well we ranked the 3 qualified candidates
-```
+| Metric | What It Measures |
+|--------|-----------------|
+| Precision@K | Fraction of shortlist that are qualified |
+| Recall@K | Coverage of all qualified candidates |
+| NDCG@K | Rank-weighted precision |
+| MAP | Average precision across multiple JDs |
 
 ### Performance Benchmarks
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│              BENCHMARK RESULTS (MiniLM-L6-v2)               │
-│              Hardware: 8GB RAM, Intel i7 (no GPU)           │
-├──────────────────────────┬──────────────────────────────────┤
-│ Metric                   │ Result                           │
-├──────────────────────────┼──────────────────────────────────┤
-│ 10 resumes               │ ~8 seconds (cold start)          │
-│ 10 resumes (warm)        │ ~2 seconds (model cached)        │
-│ 50 resumes               │ ~25 seconds                      │
-│ 100 resumes              │ ~48 seconds                      │
-│ Peak memory (100 files)  │ < 3.5 GB RAM                     │
-│ Parsing accuracy (PDF)   │ 95%+                             │
-│ Parsing accuracy (DOCX)  │ 97%+                             │
-│ Cache hit rate (Redis)   │ 85%+ on repeated JDs             │
-└──────────────────────────┴──────────────────────────────────┘
-```
-
-```
-PROCESSING TIME vs BATCH SIZE
-Time (s)
-50 │                                            ●
-   │                                      ●
-30 │                               ●
-   │                       ●
-20 │                  ●
-10 │           ●
- 5 │      ●
-   │  ●
- 2 │●
-   └─────────────────────────────────────────── N resumes
-   1  5  10  20  30  40  50  60  70  80  90  100
-```
+| Scenario | Time | Notes |
+|----------|------|-------|
+| 10 resumes cold start | ~8s | Model loading included |
+| 10 resumes warm | ~2s | Model cached in memory |
+| 50 resumes | ~25s | Batch embedding |
+| 100 resumes | ~48s | Full pipeline |
+| Peak RAM 100 files | <3.5 GB | MiniLM model |
+| Cache hit rate | 85%+ | Repeated JDs |
 
 ---
 
-## 🧪 Testing
+## Testing and CI/CD
 
-### Run the Test Suite
-
-```bash
-# Install dev dependencies
+`ash
 pip install -r requirements-dev.txt
+pytest tests/ --cov=src --cov-report=html
+`
 
-# Run all tests
-pytest tests/ -v
+Coverage: 92% across 18 test files
 
-# With coverage report
-pytest tests/ --cov=src --cov-report=html --cov-report=term-missing
-
-# Run specific test file
-pytest tests/test_ranking_engine.py -v
-
-# Run specific test
-pytest tests/test_skill_matcher.py::TestSkillMatcher::test_calculate_skill_match_exact_match -v
-```
-
-### Coverage Summary
-
-```
-Coverage Report (as of latest commit)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Module                    Lines    Cover
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-src/parsers/resume_parser    152     96%
-src/parsers/text_extractor   287     94%
-src/parsers/section_parser   418     91%
-src/parsers/skill_extractor  302     93%
-src/embeddings/embedding_gen 289     92%
-src/embeddings/vector_store  198     90%
-src/ranking/ranking_engine   312     94%
-src/ranking/skill_matcher    394     95%
-src/ranking/fairness_checker 228     88%
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TOTAL                                92%
-```
-
-### Property-Based Tests
-
-Using `hypothesis` for property-based testing to catch edge cases:
-
-```python
-from hypothesis import given, strategies as st
-
-@given(
-    semantic=st.floats(0.0, 1.0),
-    skill=st.floats(0.0, 1.0)
-)
-def test_hybrid_score_in_valid_range(semantic, skill):
-    """Hybrid score must always be in [0, 1]."""
-    engine = RankingEngine()
-    score = engine.semantic_weight * semantic + engine.skill_weight * skill
-    assert 0.0 <= score <= 1.0
-
-@given(st.lists(st.text(), min_size=1))
-def test_ranking_is_monotonic(resume_texts):
-    """Higher individual scores should produce higher ranks."""
-    ...
-```
+CI/CD Pipeline on every push to main:
+1. Code Quality: black + isort + flake8
+2. Security Scan: bandit
+3. Unit Tests: Python 3.9 / 3.10 / 3.11
+4. Docker Build
+5. Performance Smoke Test
 
 ---
 
-## 🔄 CI/CD Pipeline
+## Sample Data
 
-### GitHub Actions Workflow
+Six synthetic candidates in data/sample_resumes/ demonstrate the system:
 
-```
-On Push / PR to main:
-        │
-        ▼
-┌──────────────────┐
-│  Lint & Format   │  black --check, flake8, isort
-└──────────────────┘
-        │
-        ▼
-┌──────────────────┐
-│  Type Check      │  mypy src/
-└──────────────────┘
-        │
-        ▼
-┌──────────────────┐
-│  Security Scan   │  bandit -r src/
-└──────────────────┘
-        │
-        ▼
-┌──────────────────┐
-│  Unit Tests      │  pytest tests/ --cov=src
-└──────────────────┘
-        │
-        ▼
-┌──────────────────┐
-│  Build Docker    │  docker build -t resume-screener .
-└──────────────────┘
-```
+| Name | Role | Score | Key Insight |
+|------|------|-------|-------------|
+| Priya Sharma | Data Scientist | ~91% | Strong ML + fairness expertise |
+| Aisha Rodriguez | MLOps Engineer | ~87% | Expert in embeddings + FAISS |
+| Alex Chen | Software Engineer | ~80% | Strong Python/ML all-rounder |
+| Dr. Sarah Okonkwo | NLP Scientist | ~74% | Hidden gem -- deep NLP different vocab |
+| Marcus Johnson | Full Stack Dev | ~38% | Growing ML interest correctly deprioritised |
+| James Whitfield | HR Manager | ~9% | Non-technical system correctly ranks last |
 
-### Pre-commit Hooks
-
-```yaml
-# .pre-commit-config.yaml
-repos:
-  - repo: black          # code formatting
-  - repo: flake8         # linting
-  - repo: mypy           # type checking
-  - repo: isort          # import sorting
-```
+Sarah Okonkwo is the key demo. She never says "resume screening" but writes "document understanding pipeline". Keyword matching: 12%. Semantic AI: 78%.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-### Version 1.1 (Next)
-- [ ] **LLM Re-ranking**: Use GPT-4o to re-score top-10 candidates with deeper context
-- [ ] **PDF Report Generation**: Professional downloadable screening reports
-- [ ] **Skill Taxonomy Expansion**: 500+ skills (currently 200+)
-- [ ] **FastAPI Backend**: REST API for ATS system integrations
+### v1.1 Next
+- GPT-4o re-ranking for top-10 candidates
+- PDF report generation professional layout
+- Skill taxonomy expansion to 500+ skills
+- Candidate drill-down with resume preview
 
-### Version 2.0
-- [ ] **Multi-language Support**: Resume processing in Spanish, French, German, Mandarin
-- [ ] **Custom Model Fine-tuning**: Domain-specific embedding fine-tuning
-- [ ] **Real-time Collaboration**: Multi-recruiter sessions on same candidate pool
-- [ ] **Advanced Analytics**: Predictive hire success probability models
+### v2.0
+- Multi-language support Spanish French German Mandarin
+- Custom model fine-tuning on domain-specific data
+- ATS connectors Greenhouse Lever Workday
+- Real-time multi-recruiter collaboration
 
-### Version 2.1
-- [ ] **ATS Connectors**: Native integrations (Greenhouse, Lever, Workday)
-- [ ] **Candidate Portal**: Self-service portal for candidates to check fit
-- [ ] **Video Resume Analysis**: AI-powered video interview screening
-- [ ] **Mobile App**: iOS and Android native applications
-
----
-
-## 📖 Research Background
-
-This project is grounded in recent academic and industry research:
-
-### Key Papers
-
-1. **Sentence-BERT**: Reimers & Gurevych (2019). *"Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks."* EMNLP 2019. — Foundation for our semantic embedding approach.
-
-2. **JobPilot**: Arora et al. (2025). *"JobPilot: AI-Powered Resume Screening with MiniLM Embeddings and Gemini Re-ranking."* — Directly informed our hybrid scoring approach.
-
-3. **Fairness in ML Hiring**: Raghavan et al. (2020). *"Mitigating Bias in Algorithmic Hiring: Evaluating Claims and Practices."* FAccT 2020. — Basis for our fairness checking framework.
-
-4. **FAISS**: Johnson, Douze & Jégou (2021). *"Billion-scale similarity search with GPUs."* IEEE Transactions on Big Data. — Underpins our vector store.
-
-5. **Debiasing Word Embeddings**: Bolukbasi et al. (2016). *"Man is to Computer Programmer as Woman is to Homemaker?"* NIPS 2016. — Motivated our fairness awareness design.
-
-### Benchmarks Referenced
-
-- MTEB (Massive Text Embedding Benchmark) — for model selection decisions
-- SBERT benchmarks on STS (Semantic Textual Similarity) tasks
-- LinkedIn's Fairness benchmarks for hiring algorithm evaluation
+### v2.1
+- Candidate self-service portal
+- Video resume analysis
+- Predictive hire success probability
+- Mobile app iOS and Android
 
 ---
 
-## 🤝 Contributing
+## Research Background
 
-We welcome contributions! Please follow these steps:
+1. Sentence-BERT -- Reimers and Gurevych 2019. Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. EMNLP 2019.
 
-### Development Setup
+2. Fairness in ML Hiring -- Raghavan et al. 2020. Mitigating Bias in Algorithmic Hiring. FAccT 2020.
 
-```bash
+3. FAISS -- Johnson Douze and Jegou 2021. Billion-scale similarity search with GPUs. IEEE Transactions on Big Data.
+
+4. MTEB Benchmark -- Muennighoff et al. 2022. MTEB: Massive Text Embedding Benchmark.
+
+---
+
+## Contributing
+
+`ash
 git clone https://github.com/kunal-gh/assignment.git
 cd assignment
-
 python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-
+source venv/bin/activate
 pip install -r requirements-dev.txt
 pre-commit install
 python -m spacy download en_core_web_sm
-```
+`
 
-### Code Standards
-
-- **Formatting**: `black src/ tests/` (line length 127)
-- **Import sorting**: `isort src/ tests/`
-- **Linting**: `flake8 src/ tests/`
-- **Type hints**: Required for all public functions
-- **Docstrings**: Google-style, required for all public classes and functions
-- **Tests**: Required for all new features (maintain 90%+ coverage)
-
-### Pull Request Process
-
-1. Create a feature branch: `git checkout -b feature/your-feature-name`
-2. Write code + tests
-3. Run `pre-commit run --all-files` — must pass
-4. Open PR with clear description of what and why
+Standards: black line-length 127 + isort + flake8 + type hints on all public functions.
 
 ---
 
-## 📄 License
+## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License -- see LICENSE for details.
 
 ---
 
-<div align="center">
+Built by Kunal Saini -- https://github.com/kunal-gh
 
-```
-Built with focus, an unhealthy amount of coffee, and genuine care about
-making hiring more fair, efficient, and explainable.
-```
-
-**[Kunal Saini](https://github.com/kunal-gh)** — 2026
-
-*"The best tool for finding great candidates isn't the one that processes resumes fastest,*  
-*it's the one that understands humans best."*
-
-</div>
+"The best hiring tool is not the one that processes resumes fastest.
+ It is the one that understands humans best."
