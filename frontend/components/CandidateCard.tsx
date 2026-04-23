@@ -163,9 +163,17 @@ export default function CandidateCard({ candidate, index }: CandidateCardProps) 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: index * 0.08 + 0.5 }}
-          className="mt-4 p-4 border-l-4 border-black bg-gray-50"
+          className={`mt-4 p-4 border-l-4 ${
+            candidate.explanation.includes('Hidden Gem') || candidate.explanation.includes('hidden gem')
+              ? 'border-yellow-400 bg-yellow-50'
+              : 'border-black bg-gray-50'
+          }`}
         >
-          <p className="text-xs font-black tracking-widest uppercase text-black mb-1">AI ANALYSIS</p>
+          <p className="text-xs font-black tracking-widest uppercase text-black mb-1">
+            {candidate.explanation.includes('Hidden Gem') || candidate.explanation.includes('hidden gem')
+              ? '⭐ HIDDEN GEM DETECTED'
+              : 'AI ANALYSIS'}
+          </p>
           <p className="text-sm text-gray-700 leading-relaxed">
             {candidate.explanation}
           </p>
