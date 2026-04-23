@@ -1,181 +1,218 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// ─── Skill taxonomy + synonyms ────────────────────────────────────────────────
+// ─── Skill taxonomy ───────────────────────────────────────────────────────────
 
-// Canonical skill name -> list of aliases that should map to it
-const SKILL_ALIASES: Record<string, string[]> = {
-  'python': ['python3', 'py'],
-  'javascript': ['js', 'es6', 'es2015'],
-  'typescript': ['ts'],
-  'node.js': ['node', 'nodejs', 'node js'],
-  'react': ['reactjs', 'react.js'],
-  'postgresql': ['postgres', 'psql'],
-  'mongodb': ['mongo'],
-  'kubernetes': ['k8s', 'kube'],
-  'machine learning': ['ml'],
-  'deep learning': ['dl'],
-  'natural language processing': ['nlp'],
-  'computer vision': ['cv'],
-  'reinforcement learning': ['rl'],
-  'rag': ['retrieval augmented generation', 'retrieval-augmented generation', 'retrieval augmented'],
-  'llm': ['large language model', 'large language models'],
-  'langchain': ['lang chain'],
-  'scikit-learn': ['sklearn', 'scikit learn'],
-  'hugging face': ['huggingface', 'hf'],
-  'ci/cd': ['cicd', 'ci cd', 'continuous integration', 'continuous deployment'],
-  'rest api': ['restful', 'rest', 'restful api'],
-  'docker': ['containerization', 'containers'],
-  'aws': ['amazon web services'],
-  'gcp': ['google cloud', 'google cloud platform'],
-  'azure': ['microsoft azure'],
-  'fastapi': ['fast api'],
-  'neo4j': ['neo4j'],
-  'qdrant': ['qdrant'],
-  'crewai': ['crew ai', 'crewai'],
-  'mcp': ['model context protocol'],
-  'graph neural networks': ['gnn', 'gnns'],
-  'pydantic': ['pydantic'],
-  'three.js': ['threejs', 'three js'],
-  'tailwind': ['tailwind css', 'tailwindcss'],
-  'streamlit': ['streamlit'],
-  'serverless': ['serverless deployment'],
-};
+// Every entry: [canonical_name, ...aliases_and_abbreviations]
+const SKILL_ENTRIES: [string, ...string[]][] = [
+  // Languages
+  ['python', 'python3', 'py'],
+  ['javascript', 'js', 'es6'],
+  ['typescript', 'ts'],
+  ['sql', 'mysql', 'sqlite'],
+  ['java'],
+  ['html', 'html5'],
+  ['css', 'css3'],
+  ['r'],
+  ['scala'],
+  ['go', 'golang'],
+  ['rust'],
+  ['bash', 'shell', 'sh'],
+  ['c++', 'cpp'],
+  ['c#', 'csharp'],
+  // Frameworks / Libraries
+  ['react', 'reactjs', 'react.js'],
+  ['next.js', 'nextjs', 'next js'],
+  ['angular', 'angularjs'],
+  ['vue', 'vuejs', 'vue.js'],
+  ['node.js', 'node', 'nodejs'],
+  ['django'],
+  ['flask'],
+  ['fastapi', 'fast api'],
+  ['express', 'expressjs'],
+  ['spring', 'spring boot'],
+  ['tailwind', 'tailwind css', 'tailwindcss'],
+  ['streamlit'],
+  ['three.js', 'threejs', 'three js'],
+  // ML / AI
+  ['machine learning', 'ml'],
+  ['deep learning', 'dl'],
+  ['natural language processing', 'nlp'],
+  ['computer vision', 'cv'],
+  ['reinforcement learning', 'rl'],
+  ['tensorflow', 'tf'],
+  ['pytorch', 'torch'],
+  ['keras'],
+  ['scikit-learn', 'sklearn', 'scikit learn'],
+  ['xgboost'],
+  ['lightgbm'],
+  ['transformers', 'huggingface transformers'],
+  ['sentence-transformers', 'sbert'],
+  ['hugging face', 'huggingface', 'hf'],
+  ['langchain', 'lang chain'],
+  ['openai', 'open ai'],
+  ['anthropic', 'claude'],
+  ['gemini', 'google gemini'],
+  ['llm', 'large language model', 'large language models'],
+  ['rag', 'retrieval augmented generation', 'retrieval-augmented generation'],
+  ['embeddings', 'vector embeddings'],
+  ['faiss'],
+  ['spacy', 'spaCy'],
+  ['mlops', 'ml ops'],
+  ['mlflow'],
+  ['airflow', 'apache airflow'],
+  ['kubeflow'],
+  ['crewai', 'crew ai', 'crewai'],
+  ['mcp', 'model context protocol'],
+  ['graph neural networks', 'gnn', 'gnns'],
+  ['pydantic'],
+  ['vector database', 'vector db', 'vectordb'],
+  ['agentic ai', 'ai agents', 'agentic'],
+  ['ai tool integration'],
+  ['workflow automation'],
+  // Data
+  ['pandas'],
+  ['numpy'],
+  ['scipy'],
+  ['matplotlib'],
+  ['seaborn'],
+  ['plotly'],
+  ['jupyter', 'jupyter notebook'],
+  ['databricks'],
+  ['snowflake'],
+  ['bigquery'],
+  ['dbt'],
+  ['spark', 'apache spark', 'pyspark'],
+  ['kafka', 'apache kafka'],
+  ['hadoop'],
+  // Databases
+  ['postgresql', 'postgres', 'psql'],
+  ['mongodb', 'mongo'],
+  ['redis'],
+  ['elasticsearch', 'elastic'],
+  ['neo4j'],
+  ['qdrant'],
+  ['cassandra'],
+  ['dynamodb', 'dynamo db'],
+  ['firebase'],
+  ['pinecone'],
+  ['weaviate'],
+  ['chroma', 'chromadb'],
+  // Cloud / DevOps
+  ['aws', 'amazon web services'],
+  ['azure', 'microsoft azure'],
+  ['gcp', 'google cloud', 'google cloud platform'],
+  ['docker', 'containerization'],
+  ['kubernetes', 'k8s'],
+  ['terraform'],
+  ['ansible'],
+  ['jenkins'],
+  ['git', 'github', 'gitlab'],
+  ['github actions'],
+  ['ci/cd', 'cicd', 'continuous integration', 'continuous deployment'],
+  ['linux', 'ubuntu', 'debian'],
+  ['nginx'],
+  ['serverless', 'serverless deployment'],
+  ['model monitoring'],
+  // APIs / Architecture
+  ['rest api', 'restful', 'rest', 'restful api'],
+  ['graphql'],
+  ['grpc'],
+  ['websocket'],
+  ['microservices'],
+  ['devops'],
+  // Soft skills
+  ['leadership'],
+  ['communication'],
+  ['teamwork'],
+  ['problem solving'],
+  ['project management'],
+  ['agile', 'agile methodology'],
+  ['scrum'],
+];
 
-// Build reverse map: alias -> canonical
-const ALIAS_MAP: Record<string, string> = {};
-for (const [canonical, aliases] of Object.entries(SKILL_ALIASES)) {
+// Build lookup: all lowercase variants -> canonical name
+const SKILL_LOOKUP = new Map<string, string>();
+for (const [canonical, ...aliases] of SKILL_ENTRIES) {
+  SKILL_LOOKUP.set(canonical.toLowerCase(), canonical);
   for (const alias of aliases) {
-    ALIAS_MAP[alias.toLowerCase()] = canonical;
+    SKILL_LOOKUP.set(alias.toLowerCase(), canonical);
   }
 }
-
-const ALL_SKILLS = new Set([
-  // Languages
-  'python','java','javascript','typescript','sql','html','css','r','scala','go','rust','bash','shell',
-  // Frameworks
-  'react','angular','vue','django','flask','fastapi','node.js','express','spring','rails',
-  'three.js','tailwind','streamlit','next.js','nuxt.js',
-  // ML/AI
-  'machine learning','deep learning','nlp','natural language processing','computer vision',
-  'reinforcement learning','tensorflow','pytorch','keras','scikit-learn','xgboost','lightgbm',
-  'transformers','sentence-transformers','hugging face','langchain','openai','llm','rag',
-  'embeddings','faiss','spacy','mlops','mlflow','airflow','kubeflow','crewai','mcp',
-  'graph neural networks','pydantic',
-  // Data
-  'pandas','numpy','scipy','matplotlib','seaborn','plotly','jupyter','databricks',
-  'snowflake','bigquery','dbt','spark','kafka','hadoop',
-  // Databases
-  'postgresql','mongodb','redis','elasticsearch','sqlite','mysql','neo4j','qdrant',
-  'cassandra','dynamodb','firebase',
-  // Cloud/DevOps
-  'aws','azure','gcp','docker','kubernetes','terraform','ansible','jenkins','git',
-  'github actions','ci/cd','linux','nginx','serverless',
-  // APIs
-  'rest api','graphql','grpc','websocket',
-  // Other
-  'agile','scrum','microservices','devops','vector database',
-  // Soft
-  'leadership','communication','teamwork','problem solving','project management',
-]);
 
 const SKILL_IDF: Record<string, number> = {
   'rag': 3.5, 'mcp': 3.4, 'crewai': 3.3, 'faiss': 3.2, 'spacy': 3.1,
   'sentence-transformers': 3.4, 'mlops': 3.0, 'kubeflow': 3.3,
   'graph neural networks': 3.2, 'neo4j': 3.0, 'qdrant': 3.1,
+  'vector database': 3.0, 'agentic ai': 3.2, 'llm': 2.8,
   'airflow': 2.9, 'mlflow': 2.8, 'embeddings': 2.7,
   'natural language processing': 2.6, 'transformers': 2.5, 'pytorch': 2.4,
   'tensorflow': 2.3, 'kubernetes': 2.2, 'docker': 2.0, 'aws': 1.9,
   'machine learning': 2.1, 'deep learning': 2.2, 'langchain': 2.6,
-  'llm': 2.8, 'vector database': 2.9, 'pydantic': 2.0,
-  'python': 1.5, 'sql': 1.4, 'git': 1.2, 'agile': 1.1,
+  'pydantic': 2.0, 'python': 1.5, 'sql': 1.4, 'git': 1.2, 'agile': 1.1,
 };
 
-// ─── Text extraction from PDF/DOCX ───────────────────────────────────────────
+// ─── PDF text extraction ──────────────────────────────────────────────────────
 
-/**
- * Extract readable text from a file.
- * PDFs are binary — we extract ASCII-printable characters and common patterns.
- * This is a best-effort extraction without a PDF library.
- */
-async function extractText(file: File): Promise<string> {
-  const isPdf = file.name.toLowerCase().endsWith('.pdf');
+async function extractTextFromFile(file: File): Promise<string> {
+  const name = file.name.toLowerCase();
 
-  if (!isPdf) {
-    // DOCX and plain text files can be read as text
-    return await file.text();
+  if (!name.endsWith('.pdf')) {
+    // DOCX / TXT — readable as text
+    return file.text();
   }
 
-  // For PDFs: read as ArrayBuffer, extract printable ASCII strings
-  const buffer = await file.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-
-  // Extract sequences of printable ASCII characters (length >= 3)
-  // This captures text embedded in PDF streams
-  const chunks: string[] = [];
-  let current = '';
+  // PDF: read binary, extract printable ASCII strings
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  const parts: string[] = [];
+  let cur = '';
 
   for (let i = 0; i < bytes.length; i++) {
     const b = bytes[i];
-    // Printable ASCII: 32-126, plus tab(9), newline(10), carriage return(13)
     if ((b >= 32 && b <= 126) || b === 9 || b === 10 || b === 13) {
-      current += String.fromCharCode(b);
+      cur += String.fromCharCode(b);
     } else {
-      if (current.length >= 3) chunks.push(current);
-      current = '';
+      if (cur.length >= 2) parts.push(cur);
+      cur = '';
     }
   }
-  if (current.length >= 3) chunks.push(current);
+  if (cur.length >= 2) parts.push(cur);
 
-  const raw = chunks.join(' ');
-
-  // Clean up PDF artifacts: remove sequences like (Tj)(ET)(BT) etc.
-  const cleaned = raw
-    .replace(/\(([^)]{0,200})\)/g, ' $1 ')  // extract text inside ()
-    .replace(/\/[A-Za-z]+\d*/g, ' ')          // remove PDF operators like /F1
-    .replace(/\d+\.\d+\s+\d+\.\d+\s+\d+\.\d+\s+\d+\.\d+\s+\d+\.\d+\s+\d+\.\d+/g, ' ') // matrix transforms
-    .replace(/[^\x20-\x7E\n]/g, ' ')          // remove non-printable
-    .replace(/\s{2,}/g, ' ')                   // collapse whitespace
+  return parts
+    .join(' ')
+    // Unwrap parenthesised text: (RAG) -> RAG
+    .replace(/\(([^)]{1,60})\)/g, ' $1 ')
+    // Remove PDF operators
+    .replace(/\b(BT|ET|Tf|Td|TD|Tm|Tr|Ts|Tw|Tz|T\*|Tj|TJ|cm|re|Do|BI|EI|BMC|EMC)\b/g, ' ')
+    .replace(/\s{2,}/g, ' ')
     .trim();
-
-  return cleaned;
 }
 
 // ─── Skill extraction ─────────────────────────────────────────────────────────
 
-function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
-    // Expand parenthetical forms: "Retrieval-Augmented Generation(RAG)" -> include both
-    .replace(/\(([^)]{1,30})\)/g, ' $1 ')
-    // Normalize separators
-    .replace(/[,;|•·\-–—]/g, ' ')
-    .replace(/\s+/g, ' ');
-}
-
 function extractSkills(text: string): string[] {
-  const normalized = normalizeText(text);
+  // Normalise: lowercase, expand parens, normalise separators
+  const norm = text
+    .toLowerCase()
+    .replace(/\(([^)]{1,60})\)/g, ' $1 ')   // (RAG) -> RAG
+    .replace(/[,;|•·\-–—\/\\]/g, ' ')
+    .replace(/\s+/g, ' ');
+
   const found = new Set<string>();
 
-  // 1. Check aliases first (e.g. "RAG" -> "rag", "retrieval-augmented generation" -> "rag")
-  for (const [alias, canonical] of Object.entries(ALIAS_MAP)) {
-    const esc = alias.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-    try {
-      if (new RegExp('\\b' + esc + '\\b').test(normalized)) {
-        found.add(canonical);
-      }
-    } catch { /* skip bad regex */ }
-  }
+  // Sort by length descending so multi-word phrases match before single words
+  const entries = [...SKILL_LOOKUP.entries()].sort((a, b) => b[0].length - a[0].length);
 
-  // 2. Check canonical skills directly
-  const sorted = [...ALL_SKILLS].sort((a, b) => b.length - a.length);
-  for (const skill of sorted) {
-    if (found.has(skill)) continue;
-    const esc = skill.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-    try {
-      if (new RegExp('\\b' + esc + '\\b').test(normalized)) {
-        found.add(skill);
-      }
-    } catch { /* skip bad regex */ }
+  for (const [variant, canonical] of entries) {
+    // Use includes() for short acronyms (MCP, RAG, LLM) — faster and catches edge cases
+    if (variant.length <= 4) {
+      // For short terms, check word boundary manually
+      const re = new RegExp('(?:^|[\\s,;(\\[])' + variant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:[\\s,;)\\]]|$)', 'i');
+      if (re.test(norm)) found.add(canonical);
+    } else {
+      // For longer terms, simple includes is fine
+      if (norm.includes(variant)) found.add(canonical);
+    }
   }
 
   return [...found];
@@ -184,7 +221,12 @@ function extractSkills(text: string): string[] {
 // ─── Scoring ──────────────────────────────────────────────────────────────────
 
 function tfidfSim(a: string, b: string): number {
-  const tok = (t: string) => (normalizeText(t).match(/\b[a-z][a-z0-9]{1,25}\b/g) || []);
+  const tok = (t: string) =>
+    t.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2);
+
   const tA = tok(a), tB = tok(b);
   if (!tA.length || !tB.length) return 0.15;
 
@@ -203,20 +245,21 @@ function tfidfSim(a: string, b: string): number {
     dot += x * y; nA += x * x; nB += y * y;
   }
   if (!nA || !nB) return 0.15;
-  // Scale up — raw TF-IDF cosine on bag-of-words is typically 0.05-0.3 for related docs
-  return Math.min(1.0, (dot / (Math.sqrt(nA) * Math.sqrt(nB))) * 5.0);
+  return Math.min(1.0, (dot / (Math.sqrt(nA) * Math.sqrt(nB))) * 5.5);
 }
 
 function calcSkillScore(resumeSkills: string[], jdSkills: string[]): number {
   if (!jdSkills.length) return 0;
   const s = new Set(resumeSkills);
   const total = jdSkills.reduce((acc, sk) => acc + (SKILL_IDF[sk] || 1.5), 0);
-  const matched = jdSkills.filter(sk => s.has(sk)).reduce((acc, sk) => acc + (SKILL_IDF[sk] || 1.5), 0);
+  const matched = jdSkills
+    .filter(sk => s.has(sk))
+    .reduce((acc, sk) => acc + (SKILL_IDF[sk] || 1.5), 0);
   return Math.min(1.0, matched / Math.max(total, 1));
 }
 
 function isHiddenGem(sem: number, sk: number) {
-  return sem >= 0.45 && sk < 0.35 && (sem - sk) > 0.15;
+  return sem >= 0.4 && sk < 0.3 && (sem - sk) > 0.15;
 }
 
 function buildExplanation(
@@ -229,9 +272,9 @@ function buildExplanation(
 
   if (isHiddenGem(sem, sk)) {
     p.push(`Hidden Gem: semantic score (${(sem * 100).toFixed(0)}%) is significantly higher than skill-match (${(sk * 100).toFixed(0)}%) — this candidate may use different vocabulary for equivalent experience.`);
-  } else if (sem >= 0.65) {
-    p.push(`Strong semantic alignment (${(sem * 100).toFixed(0)}%) indicates relevant experience and background.`);
-  } else if (sem >= 0.4) {
+  } else if (sem >= 0.6) {
+    p.push(`Strong semantic alignment (${(sem * 100).toFixed(0)}%) indicates relevant experience.`);
+  } else if (sem >= 0.35) {
     p.push(`Moderate semantic match (${(sem * 100).toFixed(0)}%) shows some relevant background.`);
   }
 
@@ -260,10 +303,8 @@ export async function POST(req: NextRequest) {
     const t0       = Date.now();
 
     const candidates = await Promise.all(files.map(async (file) => {
-      // Extract text — handles PDF binary properly
-      const content = await extractText(file);
+      const content = await extractTextFromFile(file);
 
-      // Name from filename
       const stem = file.name.replace(/\.(pdf|docx)$/i, '').replace(/[_\-]/g, ' ');
       const name = stem.split(' ').slice(0, 3)
         .map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Candidate';
@@ -276,7 +317,6 @@ export async function POST(req: NextRequest) {
       const sk     = calcSkillScore(rSkills, jdSkills);
       const hybrid = Math.min(1, Math.max(0, semW * sem + (1 - semW) * sk));
 
-      // Years experience from year range in text
       const yrs = (() => {
         const m = content.match(/\b(20\d{2})\b/g) || [];
         if (m.length < 2) return 0;
@@ -306,9 +346,9 @@ export async function POST(req: NextRequest) {
     });
 
     const gems = candidates.filter(c => isHiddenGem(c.semantic_score, c.skill_score));
-    const recs = ['Rankings are based purely on skills and semantic relevance — no demographic data used.'];
+    const recs = ['Rankings are based purely on skills and semantic relevance.'];
     if (gems.length) recs.push(`Potential hidden gem(s): ${gems.map(c => c.name).join(', ')} — high semantic score despite lower keyword match.`);
-    recs.push('Consider blind review for shortlisted candidates to reduce unconscious bias.');
+    recs.push('Consider blind review for shortlisted candidates.');
 
     return NextResponse.json({
       job_id: `job_${Date.now()}`,
