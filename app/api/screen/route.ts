@@ -192,6 +192,8 @@ function extractNameAndEmail(text: string, filename: string): { name: string; em
   }
   return { name, email };
 }
+
+async function runFallbackEngine(req: NextRequest): Promise<NextResponse> {
   const form = await req.formData();
   const jobTitle = (form.get('job_title') as string) || 'Software Engineer';
   const jobDesc  = (form.get('job_description') as string) || '';
