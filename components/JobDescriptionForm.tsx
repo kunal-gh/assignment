@@ -30,7 +30,7 @@ export default function JobDescriptionForm() {
       {/* Inputs */}
       <div className="flex flex-col gap-3 flex-1 min-h-0">
         <div className="flex-shrink-0">
-          <label className="block text-xs font-black tracking-widest uppercase mb-1 text-black">TITLE</label>
+          <label className="block text-sm font-black tracking-widest uppercase mb-1 text-black">TITLE</label>
           <input
             type="text"
             value={jobTitle}
@@ -41,7 +41,7 @@ export default function JobDescriptionForm() {
         </div>
 
         <div className="flex-1 flex flex-col min-h-0">
-          <label className="block text-xs font-black tracking-widest uppercase mb-1 text-black">DESCRIPTION</label>
+          <label className="block text-sm font-black tracking-widest uppercase mb-1 text-black">DESCRIPTION</label>
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
@@ -55,19 +55,19 @@ export default function JobDescriptionForm() {
       <div className="mt-3 pt-3 border-t-4 border-black flex-shrink-0">
         <div className="flex items-center gap-2 mb-3">
           <Settings className="w-4 h-4" />
-          <h3 className="text-xs font-black tracking-widest uppercase text-black">CONFIGURATION</h3>
+          <h3 className="text-sm font-black tracking-widest uppercase text-black">CONFIGURATION</h3>
         </div>
 
         {/* Scoring Weights */}
         <div className="mb-3">
           <div className="flex justify-between items-center mb-1">
-            <label className="text-xs font-black tracking-widest uppercase text-black">SCORING WEIGHTS</label>
+            <label className="text-sm font-black tracking-widest uppercase text-black">SCORING WEIGHTS</label>
             <div className="bg-black text-white px-2 py-0.5 text-xs font-black tracking-widest">
               {(semanticWeight * 100).toFixed(0)}% SEM / {(skillWeight * 100).toFixed(0)}% SKL
             </div>
           </div>
-          <p className="text-xs text-gray-500 mb-2">
-            Semantic = meaning match. Skills = keyword match. Slide to balance both.
+          <p className="text-sm text-gray-500 mb-2">
+            How much weight to give AI understanding vs. exact skill keywords when scoring candidates. Higher semantic = rewards candidates who express the same ideas differently.
           </p>
           <input
             type="range"
@@ -84,9 +84,9 @@ export default function JobDescriptionForm() {
               [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4
               [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0"
           />
-          <div className="flex justify-between text-xs font-bold text-gray-400 mt-1 uppercase">
-            <span>← Semantic</span>
-            <span>Skills →</span>
+          <div className="flex justify-between text-sm font-bold text-gray-400 mt-1 uppercase">
+            <span>← AI Meaning</span>
+            <span>Exact Skills →</span>
           </div>
         </div>
 
@@ -96,9 +96,9 @@ export default function JobDescriptionForm() {
           onClick={() => setIncludeFairness(!includeFairness)}
         >
           <div>
-            <p className="text-xs font-black tracking-widest uppercase text-black">FAIRNESS ANALYSIS</p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Checks rankings for bias patterns using the four-fifths rule.
+            <p className="text-sm font-black tracking-widest uppercase text-black">FAIRNESS ANALYSIS</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Flags if any group of candidates is being systematically ranked lower — helps catch unintended bias in results.
             </p>
           </div>
           <div className="text-black ml-3 flex-shrink-0">

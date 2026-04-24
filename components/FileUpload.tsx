@@ -55,10 +55,10 @@ export default function FileUpload() {
           className="flex flex-col items-center py-4"
         >
           <FileUp className={`w-8 h-8 mb-2 ${isDragActive ? 'text-black' : 'text-gray-400'}`} />
-          <p className="text-sm font-black tracking-widest uppercase text-black mb-1">
+          <p className="text-base font-black tracking-widest uppercase text-black mb-1">
             {isDragActive ? 'DROP FILES HERE' : 'DRAG & DROP OR CLICK'}
           </p>
-          <p className="text-xs font-bold tracking-widest uppercase text-gray-400">
+          <p className="text-sm font-bold tracking-widest uppercase text-gray-400">
             PDF & DOCX · Max 10MB each
           </p>
         </motion.div>
@@ -71,7 +71,7 @@ export default function FileUpload() {
           animate={{ opacity: 1 }}
           className="mt-3 space-y-1 max-h-32 overflow-y-auto pr-1 flex-shrink-0"
         >
-          <p className="text-xs font-black tracking-widest uppercase text-black mb-1">
+          <p className="text-sm font-black tracking-widest uppercase text-black mb-1">
             {files.length} FILE{files.length !== 1 ? 'S' : ''} SELECTED
           </p>
           <AnimatePresence>
@@ -86,8 +86,8 @@ export default function FileUpload() {
                 <div className="flex items-center space-x-2 flex-1 min-w-0">
                   <FileText className="w-4 h-4 flex-shrink-0 text-gray-600" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate text-black">{file.name}</p>
-                    <p className="text-xs text-gray-400">{formatSize(file.size)}</p>
+                    <p className="text-sm font-bold truncate text-black">{file.name}</p>
+                    <p className="text-sm text-gray-400">{formatSize(file.size)}</p>
                   </div>
                 </div>
                 <button

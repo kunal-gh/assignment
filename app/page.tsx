@@ -39,11 +39,7 @@ export default function Home() {
             </span>
           </div>
         </div>
-        <div className="w-full max-w-5xl h-[2px] bg-black mb-1 mt-2"></div>
-        <p className="text-xs font-medium tracking-widest uppercase text-black">
-          Rank candidates in seconds · Understand why, not just who
-        </p>
-        <div className="w-full max-w-5xl h-[2px] bg-black mt-1"></div>
+        <div className="w-full max-w-5xl h-[2px] bg-black mt-2"></div>
       </motion.header>
 
       {/* Content */}
@@ -59,7 +55,7 @@ export default function Home() {
         >
           {/* Helper hint */}
           {!canProcess && (
-            <p className="text-center text-xs font-bold tracking-widest uppercase text-gray-400 py-1 flex-shrink-0">
+            <p className="text-center text-sm font-bold tracking-widest uppercase text-gray-400 py-1 flex-shrink-0">
               Upload resumes + enter job title &amp; description to continue
             </p>
           )}
