@@ -10,9 +10,7 @@ export default function FileUpload() {
   const { files, addFiles, removeFile } = useScreeningStore();
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      addFiles(acceptedFiles);
-    },
+    (acceptedFiles: File[]) => { addFiles(acceptedFiles); },
     [addFiles]
   );
 
@@ -32,10 +30,11 @@ export default function FileUpload() {
   };
 
   return (
-    <div className="brutalist-card p-6 h-full flex flex-col">
-      <div className="flex items-center gap-3 mb-4 pb-4 border-b-4 border-black border-dashed">
-        <FileUp className="w-6 h-6" />
-        <h2 className="text-xl font-black tracking-widest uppercase text-black">
+    <div className="brutalist-card p-4 flex flex-col h-full min-h-0">
+      {/* Header */}
+      <div className="flex items-center gap-2 mb-3 pb-3 border-b-4 border-black border-dashed flex-shrink-0">
+        <FileUp className="w-5 h-5" />
+        <h2 className="text-base font-black tracking-widest uppercase text-black">
           UPLOAD RESUMES
         </h2>
       </div>
@@ -44,8 +43,8 @@ export default function FileUpload() {
       <div
         {...getRootProps()}
         className={`
-          flex-1 border-4 border-dashed p-8 flex flex-col justify-center items-center text-center cursor-pointer
-          transition-all duration-200 min-h-[180px]
+          flex-1 border-4 border-dashed flex flex-col justify-center items-center text-center cursor-pointer
+          transition-all duration-200 min-h-0
           ${isDragActive ? 'border-black bg-gray-100' : 'border-gray-300 hover:border-black hover:bg-gray-50'}
         `}
       >
@@ -53,10 +52,10 @@ export default function FileUpload() {
         <motion.div
           animate={isDragActive ? { scale: 1.05 } : { scale: 1 }}
           transition={{ duration: 0.15 }}
-          className="flex flex-col items-center"
+          className="flex flex-col items-center py-4"
         >
-          <FileUp className={`w-12 h-12 mb-3 ${isDragActive ? 'text-black' : 'text-gray-400'}`} />
-          <p className="text-base font-black tracking-widest uppercase text-black mb-1">
+          <FileUp className={`w-8 h-8 mb-2 ${isDragActive ? 'text-black' : 'text-gray-400'}`} />
+          <p className="text-sm font-black tracking-widest uppercase text-black mb-1">
             {isDragActive ? 'DROP FILES HERE' : 'DRAG & DROP OR CLICK'}
           </p>
           <p className="text-xs font-bold tracking-widest uppercase text-gray-400">
@@ -70,36 +69,33 @@ export default function FileUpload() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-4 space-y-2 max-h-52 overflow-y-auto pr-1"
+          className="mt-3 space-y-1 max-h-32 overflow-y-auto pr-1 flex-shrink-0"
         >
-          <p className="text-xs font-black tracking-widest uppercase text-black mb-2">
+          <p className="text-xs font-black tracking-widest uppercase text-black mb-1">
             {files.length} FILE{files.length !== 1 ? 'S' : ''} SELECTED
           </p>
           <AnimatePresence>
             {files.map((file, index) => (
               <motion.div
                 key={`${file.name}-${index}`}
-                initial={{ opacity: 0, x: -16 }}
+                initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 16 }}
-                className="flex items-center justify-between p-3 border-4 border-black bg-white"
+                exit={{ opacity: 0, x: 10 }}
+                className="flex items-center justify-between p-2 border-2 border-black bg-white"
               >
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                  <FileText className="w-5 h-5 flex-shrink-0 text-gray-600" />
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  <FileText className="w-4 h-4 flex-shrink-0 text-gray-600" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate text-black">{file.name}</p>
-                    <p className="text-xs text-gray-400 font-medium">{formatSize(file.size)}</p>
+                    <p className="text-xs font-bold truncate text-black">{file.name}</p>
+                    <p className="text-xs text-gray-400">{formatSize(file.size)}</p>
                   </div>
                 </div>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFile(index);
-                  }}
-                  className="ml-2 p-1 border-2 border-transparent hover:border-black transition-colors flex-shrink-0"
+                  onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                  className="ml-2 p-1 border border-transparent hover:border-black transition-colors flex-shrink-0"
                   aria-label={`Remove ${file.name}`}
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3 h-3" />
                 </button>
               </motion.div>
             ))}

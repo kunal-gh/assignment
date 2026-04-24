@@ -10,8 +10,7 @@ import LoadingScreen from '@/components/LoadingScreen';
 import { useScreeningStore } from '@/store/screeningStore';
 
 export default function Home() {
-  const { results, isProcessing, processResumes, jobTitle, jobDescription, files } =
-    useScreeningStore();
+  const { isProcessing, processResumes, jobTitle, jobDescription, files } = useScreeningStore();
   const [step, setStep] = useState<'upload' | 'results'>('upload');
 
   const canProcess =
@@ -23,72 +22,74 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen px-4 pb-8 md:px-8 pt-0 bg-white text-black">
-      {/* Header */}
+    <main className="h-screen flex flex-col px-4 md:px-8 bg-white text-black overflow-hidden">
+      {/* Header — compact */}
       <motion.header
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-10 flex flex-col items-center pt-6"
+        className="text-center flex flex-col items-center pt-4 pb-3 flex-shrink-0"
       >
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter leading-none uppercase mb-2 text-black">
-          AI RESUME
-        </h1>
-        <div className="bg-black text-white px-4 py-2 transform -rotate-1 mb-4 inline-block">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter leading-none uppercase">
-            SCREENER
+        <div className="flex items-center gap-3 mb-1">
+          <h1 className="text-4xl md:text-5xl font-black tracking-tighter leading-none uppercase text-black">
+            AI RESUME
           </h1>
+          <div className="bg-black text-white px-3 py-1 transform -rotate-1 inline-block">
+            <span className="text-4xl md:text-5xl font-black tracking-tighter leading-none uppercase">
+              SCREENER
+            </span>
+          </div>
         </div>
-
-        <div className="w-full max-w-4xl h-1 bg-black mb-3"></div>
-        <p className="text-sm md:text-base font-medium tracking-widest uppercase text-black">
+        <div className="w-full max-w-5xl h-[2px] bg-black mb-1 mt-2"></div>
+        <p className="text-xs font-medium tracking-widest uppercase text-black">
           Rank candidates in seconds · Understand why, not just who
         </p>
-        <div className="w-full max-w-4xl h-1 bg-black mt-3"></div>
+        <div className="w-full max-w-5xl h-[2px] bg-black mt-1"></div>
       </motion.header>
 
       {/* Content */}
       {isProcessing ? (
-        <LoadingScreen />
+        <div className="flex-1 overflow-auto">
+          <LoadingScreen />
+        </div>
       ) : step === 'upload' ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="max-w-6xl mx-auto space-y-6"
+          className="flex-1 flex flex-col max-w-7xl w-full mx-auto min-h-0"
         >
-          {/* Helper text at top */}
+          {/* Helper hint */}
           {!canProcess && (
-            <p className="text-center text-sm font-bold tracking-widest uppercase text-gray-400">
+            <p className="text-center text-xs font-bold tracking-widest uppercase text-gray-400 py-1 flex-shrink-0">
               Upload resumes + enter job title &amp; description to continue
             </p>
           )}
 
-          <div className="grid md:grid-cols-2 gap-8">
+          {/* Cards — fill remaining space */}
+          <div className="grid md:grid-cols-2 gap-4 flex-1 min-h-0 py-2">
             <FileUpload />
             <JobDescriptionForm />
           </div>
 
-          <button
-            onClick={handleProcess}
-            disabled={!canProcess}
-            className={`brutalist-button w-full py-6 text-xl md:text-2xl mt-4 ${
-              !canProcess
-                ? 'opacity-40 cursor-not-allowed hover:translate-y-0 hover:translate-x-0 hover:shadow-brutal'
-                : ''
-            }`}
-          >
-            PROCESS RESUMES <Zap className="w-6 h-6 ml-2" />
-          </button>
+          {/* Process button */}
+          <div className="flex-shrink-0 pb-3 pt-2">
+            <button
+              onClick={handleProcess}
+              disabled={!canProcess}
+              className={`brutalist-button w-full py-4 text-lg ${
+                !canProcess
+                  ? 'opacity-40 cursor-not-allowed hover:translate-y-0 hover:translate-x-0 hover:shadow-brutal'
+                  : ''
+              }`}
+            >
+              PROCESS RESUMES <Zap className="w-5 h-5 ml-2" />
+            </button>
+          </div>
         </motion.div>
       ) : (
-        <ResultsView onBack={() => setStep('upload')} />
+        <div className="flex-1 overflow-auto">
+          <ResultsView onBack={() => setStep('upload')} />
+        </div>
       )}
-
-      {/* Footer */}
-      <footer className="mt-16 text-center border-t-4 border-black pt-6">
-        <p className="text-xs font-bold tracking-widest uppercase text-gray-400">
-          sentence-transformers · FAISS · spaCy · FastAPI · Next.js · Docker
-        </p>
-      </footer>
     </main>
   );
 }
