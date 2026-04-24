@@ -18,55 +18,55 @@ export default function JobDescriptionForm() {
   const skillWeight = 1 - semanticWeight;
 
   return (
-    <div className="brutalist-card p-4 flex flex-col h-full min-h-0">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-3 pb-3 border-b-4 border-black flex-shrink-0">
-        <Briefcase className="w-5 h-5" />
-        <h2 className="text-base font-black tracking-widest uppercase text-black">
+    <div className="brutalist-card p-6 flex flex-col h-full">
+      <div className="flex items-center gap-3 mb-6 pb-4 border-b-4 border-black">
+        <Briefcase className="w-6 h-6" />
+        <h2 className="text-xl font-black tracking-widest uppercase text-black">
           JOB DESCRIPTION
         </h2>
       </div>
 
-      {/* Inputs */}
-      <div className="flex flex-col gap-3 flex-1 min-h-0">
-        <div className="flex-shrink-0">
-          <label className="block text-base font-black tracking-widest uppercase mb-1 text-black">TITLE</label>
+      <div className="space-y-5 flex-1">
+        {/* Job Title */}
+        <div>
+          <label className="block text-sm font-black tracking-widest uppercase mb-2 text-black">TITLE</label>
           <input
             type="text"
             value={jobTitle}
             onChange={(e) => setJobTitle(e.target.value)}
             placeholder="e.g., Senior Software Engineer"
-            className="brutalist-input py-2"
+            className="brutalist-input"
           />
         </div>
 
-        <div className="flex-1 flex flex-col min-h-0">
-          <label className="block text-base font-black tracking-widest uppercase mb-1 text-black">DESCRIPTION</label>
+        {/* Job Description */}
+        <div className="flex-1 flex flex-col">
+          <label className="block text-sm font-black tracking-widest uppercase mb-2 text-black">DESCRIPTION</label>
           <textarea
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
             placeholder="Enter job requirements, skills, responsibilities..."
-            className="brutalist-input flex-1 resize-none min-h-0"
+            className="brutalist-input min-h-[140px] resize-none"
           />
         </div>
       </div>
 
       {/* Configuration */}
-      <div className="mt-3 pt-3 border-t-4 border-black flex-shrink-0">
-        <div className="flex items-center gap-2 mb-3">
-          <Settings className="w-4 h-4" />
-          <h3 className="text-base font-black tracking-widest uppercase text-black">CONFIGURATION</h3>
+      <div className="mt-6 pt-6 border-t-4 border-black">
+        <div className="flex items-center gap-2 mb-5">
+          <Settings className="w-5 h-5" />
+          <h3 className="text-sm font-black tracking-widest uppercase text-black">CONFIGURATION</h3>
         </div>
 
         {/* Scoring Weights */}
-        <div className="mb-3">
-          <div className="flex justify-between items-center mb-1">
-            <label className="text-base font-black tracking-widest uppercase text-black">SCORING WEIGHTS</label>
-            <div className="bg-black text-white px-2 py-0.5 text-xs font-black tracking-widest">
+        <div className="mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <label className="text-sm font-black tracking-widest uppercase text-black">SCORING WEIGHTS</label>
+            <div className="bg-black text-white px-2 py-1 text-xs font-black tracking-widest">
               {(semanticWeight * 100).toFixed(0)}% SEM / {(skillWeight * 100).toFixed(0)}% SKL
             </div>
           </div>
-          <p className="text-sm text-gray-500 mb-2">
+          <p className="text-sm text-gray-500 mb-3">
             How much weight to give AI understanding vs. exact skill keywords when scoring candidates. Higher semantic = rewards candidates who express the same ideas differently.
           </p>
           <input
@@ -78,13 +78,13 @@ export default function JobDescriptionForm() {
             onChange={(e) => setSemanticWeight(parseFloat(e.target.value))}
             style={{ transition: 'none' }}
             className="w-full h-2 bg-white border-2 border-black rounded-none appearance-none cursor-pointer
-              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+              [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
               [&::-webkit-slider-thumb]:bg-black [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer
               [&::-webkit-slider-thumb]:transition-none
-              [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4
+              [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5
               [&::-moz-range-thumb]:bg-black [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0"
           />
-          <div className="flex justify-between text-base font-bold text-gray-400 mt-1 uppercase">
+          <div className="flex justify-between text-sm font-bold text-gray-400 mt-2 uppercase">
             <span>← AI Meaning</span>
             <span>Exact Skills →</span>
           </div>
@@ -92,17 +92,17 @@ export default function JobDescriptionForm() {
 
         {/* Fairness Toggle */}
         <div
-          className="flex items-center justify-between border-2 border-black p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-between border-4 border-black p-4 cursor-pointer hover:bg-gray-50 transition-colors"
           onClick={() => setIncludeFairness(!includeFairness)}
         >
           <div>
-            <p className="text-sm font-black tracking-widest uppercase text-black">FAIRNESS ANALYSIS</p>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-sm font-black tracking-widest uppercase text-black mb-1">FAIRNESS ANALYSIS</p>
+            <p className="text-sm text-gray-500">
               Flags if any group of candidates is being systematically ranked lower — helps catch unintended bias in results.
             </p>
           </div>
-          <div className="text-black ml-3 flex-shrink-0">
-            {includeFairness ? <CheckSquare className="w-6 h-6" /> : <Square className="w-6 h-6" />}
+          <div className="text-black ml-4 flex-shrink-0">
+            {includeFairness ? <CheckSquare className="w-7 h-7" /> : <Square className="w-7 h-7" />}
           </div>
         </div>
       </div>
