@@ -193,6 +193,9 @@ def extract_name_and_email(text: str, filename: str) -> tuple:
         name = " ".join(p.capitalize() for p in stem.split()[:3]) or "Candidate"
 
     return name, email
+
+
+def extract_skills(text: str) -> List[str]:
     norm = (
         text.lower()
         .replace("(", " ").replace(")", " ")
