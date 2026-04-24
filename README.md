@@ -82,6 +82,21 @@ Ranked candidates with scores, explanations, fairness report
 
 ---
 
+## What Actually Runs (Honest)
+
+The semantic score you see depends on which path handled the request:
+
+| Path | Triggered when | Semantic scoring method |
+|------|---------------|------------------------|
+| **Render ML backend** | Render is awake and responds | Real 384-dim embeddings via HuggingFace Inference API (`all-MiniLM-L6-v2`) |
+| **Vercel TF-IDF fallback** | Render times out or is down | TF-IDF cosine similarity — pure math, no ML model |
+
+Skill extraction (regex taxonomy) and IDF-weighted scoring are **identical in both paths**.
+
+The first request after 15+ min of inactivity will hit the Render cold start (30–60s). Subsequent requests are fast (3–8s).
+
+---
+
 ## Scoring Formula
 
 The final candidate score is a weighted combination of two independent signals:
@@ -303,12 +318,11 @@ The architecture is designed to scale with zero code changes — only infrastruc
 
 Auto-deploys on every push to `main`. No configuration needed.
 
-```bash
-# vercel.json
+```json
 {
   "functions": {
     "app/api/screen/route.ts": {
-      "maxDuration": 300   # 5 min — covers Render cold start
+      "maxDuration": 300
     }
   }
 }
@@ -318,11 +332,11 @@ Auto-deploys on every push to `main`. No configuration needed.
 
 Deployed as a Docker container. Auto-deploys on push via `render.yaml`.
 
-```bash
-# Build context: repo root
-# Dockerfile: backend/Dockerfile
-# Start command: uvicorn main:app --host 0.0.0.0 --port 8000
-# Health check: GET /health
+```
+Build context:  repo root
+Dockerfile:     backend/Dockerfile
+Start command:  uvicorn main:app --host 0.0.0.0 --port 8000
+Health check:   GET /health
 ```
 
 **Environment variables to set in Render dashboard:**
@@ -356,7 +370,7 @@ Deployed as a Docker container. Auto-deploys on push via `render.yaml`.
 │   ├── main.py                 ← FastAPI server — full ML pipeline
 │   ├── requirements.txt        ← Minimal deps (no torch/spacy bloat)
 │   └── Dockerfile              ← Python 3.11-slim Docker image
-├── data/sample_resumes/        ← 6 synthetic candidates for testing
+├── docs/screenshots/           ← UI screenshots
 ├── vercel.json                 ← Vercel function timeout config
 └── render.yaml                 ← Render deployment config
 ```
