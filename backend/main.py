@@ -163,7 +163,36 @@ def extract_text(file_path: str, filename: str) -> str:
 # ─── Skill extraction ─────────────────────────────────────────────────────────
 
 
-def extract_skills(text: str) -> List[str]:
+def extract_name_and_email(text: str, filename: str) -> tuple:
+    """Extract real name and email from resume text, fall back to filename."""
+    # Extract email
+    email_match = re.search(r'[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}', text)
+    email = email_match.group(0) if email_match else None
+
+    # Extract name — look for it in the first 20 lines before any section headers
+    name = None
+    lines = [l.strip() for l in text.split('\n')[:20] if l.strip()]
+    section_keywords = {'experience', 'education', 'skills', 'summary', 'objective',
+                        'profile', 'contact', 'projects', 'certifications', 'work'}
+    for line in lines:
+        # Skip lines that look like headers, emails, phones, URLs
+        if any(kw in line.lower() for kw in section_keywords):
+            break
+        if re.search(r'[@|http|www|\d{3}]', line):
+            continue
+        # A name is typically 2-4 words, all letters/spaces, title case or all caps
+        words = line.split()
+        if 2 <= len(words) <= 4 and all(re.match(r"^[A-Za-z'-]+$", w) for w in words):
+            name = ' '.join(w.capitalize() for w in words)
+            break
+
+    # Fall back to filename-derived name
+    if not name:
+        stem = re.sub(r"\.(pdf|docx)$", "", filename, flags=re.IGNORECASE)
+        stem = re.sub(r"[_\-]", " ", stem)
+        name = " ".join(p.capitalize() for p in stem.split()[:3]) or "Candidate"
+
+    return name, email
     norm = (
         text.lower()
         .replace("(", " ").replace(")", " ")
@@ -353,10 +382,8 @@ async def screen_resumes(
             # Extract text
             content = extract_text(file_path, filename)
 
-            # Name from filename
-            stem = re.sub(r"\.(pdf|docx)$", "", filename, flags=re.IGNORECASE)
-            stem = re.sub(r"[_\-]", " ", stem)
-            name = " ".join(p.capitalize() for p in stem.split()[:3]) or "Candidate"
+            # Extract real name and email from content
+            name, email = extract_name_and_email(content, filename)
 
             # Skills
             resume_skills = extract_skills(content)
@@ -385,7 +412,7 @@ async def screen_resumes(
 
             candidates.append({
                 "rank": 0, "name": name,
-                "email": f"{name.lower().replace(' ', '.')}@example.com",
+                "email": email,
                 "hybrid_score": round(hybrid, 4),
                 "semantic_score": round(sem, 4),
                 "skill_score": round(sk, 4),

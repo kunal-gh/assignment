@@ -167,7 +167,31 @@ function buildExplanation(name: string, rank: number, hybrid: number, sem: numbe
   return p.join(' ');
 }
 
-async function runFallbackEngine(req: NextRequest): Promise<NextResponse> {
+function extractNameAndEmail(text: string, filename: string): { name: string; email: string | null } {
+  // Extract real email
+  const emailMatch = text.match(/[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}/);
+  const email = emailMatch ? emailMatch[0] : null;
+
+  // Extract name from first 20 non-empty lines
+  const sectionKeywords = ['experience', 'education', 'skills', 'summary', 'objective', 'profile', 'contact', 'projects'];
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 20);
+  let name = '';
+  for (const line of lines) {
+    if (sectionKeywords.some(kw => line.toLowerCase().includes(kw))) break;
+    if (/@|http|www|\d{3}/.test(line)) continue;
+    const words = line.split(/\s+/);
+    if (words.length >= 2 && words.length <= 4 && words.every(w => /^[A-Za-z'-]+$/.test(w))) {
+      name = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      break;
+    }
+  }
+  // Fall back to filename
+  if (!name) {
+    const stem = filename.replace(/\.(pdf|docx)$/i, '').replace(/[_\-]/g, ' ');
+    name = stem.split(' ').slice(0, 3).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Candidate';
+  }
+  return { name, email };
+}
   const form = await req.formData();
   const jobTitle = (form.get('job_title') as string) || 'Software Engineer';
   const jobDesc  = (form.get('job_description') as string) || '';
@@ -184,8 +208,7 @@ async function runFallbackEngine(req: NextRequest): Promise<NextResponse> {
 
   const candidates = await Promise.all(files.map(async (file) => {
     const content = await extractTextFromFile(file);
-    const stem = file.name.replace(/\.(pdf|docx)$/i, '').replace(/[_\-]/g, ' ');
-    const name = stem.split(' ').slice(0, 3).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Candidate';
+    const { name, email } = extractNameAndEmail(content, file.name);
     const rSkills = extractSkills(content);
     const matched = rSkills.filter(s => jdSkills.includes(s));
     const missing = jdSkills.filter(s => !rSkills.includes(s));
@@ -197,7 +220,7 @@ async function runFallbackEngine(req: NextRequest): Promise<NextResponse> {
       if (m.length < 2) return 0;
       return Math.min(Math.max(...m.map(Number)) - Math.min(...m.map(Number)), 20);
     })();
-    return { rank: 0, name, email: `${name.toLowerCase().replace(/ /g, '.')}@example.com`,
+    return { rank: 0, name, email,
       hybrid_score: Math.round(hybrid*10000)/10000, semantic_score: Math.round(sem*10000)/10000,
       skill_score: Math.round(sk*10000)/10000, matched_skills: matched.slice(0,10),
       missing_skills: missing.slice(0,10), years_experience: yrs, explanation: '' };
