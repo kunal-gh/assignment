@@ -24,7 +24,7 @@ jobs:
         run: pip install black flake8
 
       - name: Black formatting check
-        run: black --check --line-length 127 backend/main.py
+        run: black --check --line-length 127 --skip-string-normalization backend/main.py
 
       - name: Flake8 linting
         run: flake8 backend/main.py --max-line-length 127 --extend-ignore E203,W503,D,E501

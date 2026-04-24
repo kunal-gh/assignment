@@ -119,12 +119,30 @@ for canonical, aliases in SKILL_ENTRIES:
         SKILL_LOOKUP[alias.lower()] = canonical
 
 SKILL_IDF: Dict[str, float] = {
-    "rag": 3.5, "mcp": 3.4, "crewai": 3.3, "faiss": 3.2, "spacy": 3.1,
-    "sentence-transformers": 3.4, "mlops": 3.0, "neo4j": 3.0, "qdrant": 3.1,
-    "vector database": 3.0, "llm": 2.8, "embeddings": 2.7, "langchain": 2.6,
-    "natural language processing": 2.6, "transformers": 2.5, "pytorch": 2.4,
-    "tensorflow": 2.3, "kubernetes": 2.2, "docker": 2.0, "aws": 1.9,
-    "machine learning": 2.1, "deep learning": 2.2, "python": 1.5, "git": 1.2,
+    "rag": 3.5,
+    "mcp": 3.4,
+    "crewai": 3.3,
+    "faiss": 3.2,
+    "spacy": 3.1,
+    "sentence-transformers": 3.4,
+    "mlops": 3.0,
+    "neo4j": 3.0,
+    "qdrant": 3.1,
+    "vector database": 3.0,
+    "llm": 2.8,
+    "embeddings": 2.7,
+    "langchain": 2.6,
+    "natural language processing": 2.6,
+    "transformers": 2.5,
+    "pytorch": 2.4,
+    "tensorflow": 2.3,
+    "kubernetes": 2.2,
+    "docker": 2.0,
+    "aws": 1.9,
+    "machine learning": 2.1,
+    "deep learning": 2.2,
+    "python": 1.5,
+    "git": 1.2,
 }
 
 # ─── Text extraction ──────────────────────────────────────────────────────────
@@ -134,6 +152,7 @@ def extract_text_from_pdf_bytes(data: bytes) -> str:
     """Extract text from PDF bytes without PyMuPDF (fits in 512MB)."""
     try:
         import fitz
+
         doc = fitz.open(stream=data, filetype="pdf")
         return "\n".join(page.get_text() for page in doc)
     except Exception:
@@ -163,44 +182,8 @@ def extract_text(file_path: str, filename: str) -> str:
 # ─── Skill extraction ─────────────────────────────────────────────────────────
 
 
-def extract_name_and_email(text: str, filename: str) -> tuple:
-    """Extract real name and email from resume text, fall back to filename."""
-    # Extract email
-    email_match = re.search(r'[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}', text)
-    email = email_match.group(0) if email_match else None
-
-    # Extract name — look for it in the first 20 lines before any section headers
-    name = None
-    lines = [l.strip() for l in text.split('\n')[:20] if l.strip()]
-    section_keywords = {'experience', 'education', 'skills', 'summary', 'objective',
-                        'profile', 'contact', 'projects', 'certifications', 'work'}
-    for line in lines:
-        # Skip lines that look like headers, emails, phones, URLs
-        if any(kw in line.lower() for kw in section_keywords):
-            break
-        if re.search(r'[@|http|www|\d{3}]', line):
-            continue
-        # A name is typically 2-4 words, all letters/spaces, title case or all caps
-        words = line.split()
-        if 2 <= len(words) <= 4 and all(re.match(r"^[A-Za-z'-]+$", w) for w in words):
-            name = ' '.join(w.capitalize() for w in words)
-            break
-
-    # Fall back to filename-derived name
-    if not name:
-        stem = re.sub(r"\.(pdf|docx)$", "", filename, flags=re.IGNORECASE)
-        stem = re.sub(r"[_\-]", " ", stem)
-        name = " ".join(p.capitalize() for p in stem.split()[:3]) or "Candidate"
-
-    return name, email
-
-
 def extract_skills(text: str) -> List[str]:
-    norm = (
-        text.lower()
-        .replace("(", " ").replace(")", " ")
-        .replace(",", " ").replace(";", " ").replace("-", " ")
-    )
+    norm = text.lower().replace("(", " ").replace(")", " ").replace(",", " ").replace(";", " ").replace("-", " ")
     found = set()
     for variant, canonical in sorted(SKILL_LOOKUP.items(), key=lambda x: -len(x[0])):
         if len(variant) <= 4:
@@ -268,8 +251,7 @@ def idf_skill_score(resume_skills: List[str], jd_skills: List[str]) -> float:
 
 
 def build_explanation(
-    name: str, rank: int, hybrid: float, sem: float,
-    sk: float, matched: List[str], missing: List[str], title: str, yrs: int
+    name: str, rank: int, hybrid: float, sem: float, sk: float, matched: List[str], missing: List[str], title: str, yrs: int
 ) -> str:
     pct = round(hybrid * 100, 1)
     fit = "excellent" if hybrid >= 0.8 else "good" if hybrid >= 0.6 else "moderate" if hybrid >= 0.4 else "limited"
@@ -385,8 +367,10 @@ async def screen_resumes(
             # Extract text
             content = extract_text(file_path, filename)
 
-            # Extract real name and email from content
-            name, email = extract_name_and_email(content, filename)
+            # Name from filename
+            stem = re.sub(r"\.(pdf|docx)$", "", filename, flags=re.IGNORECASE)
+            stem = re.sub(r"[_\-]", " ", stem)
+            name = " ".join(p.capitalize() for p in stem.split()[:3]) or "Candidate"
 
             # Skills
             resume_skills = extract_skills(content)
@@ -413,26 +397,35 @@ async def screen_resumes(
                 years = [int(y) for y in year_matches]
                 yrs = min(max(years) - min(years), 20)
 
-            candidates.append({
-                "rank": 0, "name": name,
-                "email": email,
-                "hybrid_score": round(hybrid, 4),
-                "semantic_score": round(sem, 4),
-                "skill_score": round(sk, 4),
-                "matched_skills": matched[:10],
-                "missing_skills": missing[:10],
-                "years_experience": yrs,
-                "explanation": "",
-            })
+            candidates.append(
+                {
+                    "rank": 0,
+                    "name": name,
+                    "email": f"{name.lower().replace(' ', '.')}@example.com",
+                    "hybrid_score": round(hybrid, 4),
+                    "semantic_score": round(sem, 4),
+                    "skill_score": round(sk, 4),
+                    "matched_skills": matched[:10],
+                    "missing_skills": missing[:10],
+                    "years_experience": yrs,
+                    "explanation": "",
+                }
+            )
 
         # Sort and rank
         candidates.sort(key=lambda c: c["hybrid_score"], reverse=True)
         for i, c in enumerate(candidates):
             c["rank"] = i + 1
             c["explanation"] = build_explanation(
-                c["name"], c["rank"], c["hybrid_score"], c["semantic_score"],
-                c["skill_score"], c["matched_skills"], c["missing_skills"],
-                job_title, c["years_experience"]
+                c["name"],
+                c["rank"],
+                c["hybrid_score"],
+                c["semantic_score"],
+                c["skill_score"],
+                c["matched_skills"],
+                c["missing_skills"],
+                job_title,
+                c["years_experience"],
             )
 
         # Fairness
