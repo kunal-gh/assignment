@@ -60,31 +60,9 @@ interface ScreeningState {
   processResumes: () => Promise<void>;
 }
 
-// Render ML backend URL — hardcoded since NEXT_PUBLIC_ sensitive vars
-// don't get embedded in the client bundle on Vercel free plan
-const RENDER_BACKEND = 'https://ai-resume-screener-api-5iq6.onrender.com';
-
+// Always use the Next.js API route — it proxies to Render server-side (no CORS issues)
 function getApiUrl(): string {
-  // Try env var first (works in local dev), fall back to hardcoded Render URL,
-  // then fall back to local Next.js TF-IDF route
-  const external = process.env.NEXT_PUBLIC_API_URL || RENDER_BACKEND;
-  if (external) return `${external}/screen`;
   return '/api/screen';
-}
-
-// Wake up the Render backend before the main request
-async function wakeBackend(): Promise<boolean> {
-  const base = process.env.NEXT_PUBLIC_API_URL;
-  if (!base) return true; // local route, no wake needed
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 8000);
-    const r = await fetch(`${base}/health`, { signal: ctrl.signal });
-    clearTimeout(t);
-    return r.ok;
-  } catch {
-    return false; // still try main request
-  }
 }
 
 const STATUS_STAGES = [

@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * If RENDER_API_URL is not set, falls back to the TF-IDF engine below.
  */
 
-const RENDER_URL = process.env.RENDER_API_URL || process.env.NEXT_PUBLIC_API_URL;
+const RENDER_URL = process.env.RENDER_API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://ai-resume-screener-api-5iq6.onrender.com';
 
 // ─── Proxy to real ML backend ─────────────────────────────────────────────────
 
