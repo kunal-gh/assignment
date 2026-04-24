@@ -363,20 +363,19 @@ Deployed as a Docker container. Auto-deploys on push via `render.yaml`.
 
 ---
 
-## Sample Results
+## Screenshots
 
-Six synthetic candidates tested against a Senior ML Engineer role:
+### Upload Interface
+![Upload Interface](docs/screenshots/upload.png)
 
-| Rank | Candidate | Role | Score | Why |
-|------|-----------|------|-------|-----|
-| 1 | Priya Sharma | Data Scientist | 91.2% | Strong ML + NLP + FAISS expertise |
-| 2 | Aisha Rodriguez | MLOps Engineer | 87.1% | Expert in embeddings + DevOps |
-| 3 | Alex Chen | Software Engineer | 79.8% | Solid Python/ML all-rounder |
-| 4 | Dr. Sarah Okonkwo | NLP Scientist | 74.3% | ⭐ Hidden gem — different vocabulary |
-| 5 | Marcus Johnson | Full Stack Dev | 38.1% | Growing ML interest, not ready |
-| 6 | James Whitfield | HR Manager | 8.9% | Non-technical, correctly ranked last |
+### Processing Results
+![Results View](docs/screenshots/result.png)
 
-Dr. Sarah Okonkwo is the key demonstration: her semantic score (82.1%) is far higher than her skill-match score (57.1%) because she uses research vocabulary ("document similarity systems", "information extraction") that maps to the same concepts as FAISS and spaCy. A keyword-only system would rank her 5th or 6th.
+### Candidate Card — Score Breakdown
+![Candidate Card](docs/screenshots/candidate-card.png)
+
+### Analytics — Score Distribution & Radar Comparison
+![Analytics Charts](docs/screenshots/analytics.png)
 
 ---
 
