@@ -19,12 +19,21 @@ async function proxyToRender(req: NextRequest): Promise<NextResponse> {
   const form = await req.formData();
   const targetUrl = `${RENDER_URL}/screen`;
 
-  // Forward the form data to Render
-  const response = await fetch(targetUrl, {
-    method: 'POST',
-    body: form,
-    // No Content-Type header — let fetch set it with the boundary
-  });
+  // 4-minute timeout — covers Render cold start (60s) + ML inference
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 240000);
+
+  let response: Response;
+  try {
+    response = await fetch(targetUrl, {
+      method: 'POST',
+      body: form,
+      signal: controller.signal,
+      // No Content-Type header — let fetch set it with the boundary
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     const text = await response.text();
@@ -215,14 +224,12 @@ async function runFallbackEngine(req: NextRequest): Promise<NextResponse> {
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // If Render backend is configured, proxy to it (server-side, no CORS)
-  if (RENDER_URL) {
-    try {
-      return await proxyToRender(req);
-    } catch (err) {
-      console.error('Render proxy failed, falling back to TF-IDF:', err);
-      // Fall through to TF-IDF fallback
-    }
+  // Always try Render ML backend first (server-side proxy, no CORS)
+  try {
+    return await proxyToRender(req);
+  } catch (err) {
+    const isTimeout = err instanceof Error && err.name === 'AbortError';
+    console.error(isTimeout ? 'Render proxy timed out, falling back to TF-IDF' : 'Render proxy failed, falling back to TF-IDF:', err);
   }
   // Fallback: TF-IDF engine (works on Vercel, no ML deps)
   return runFallbackEngine(req);

@@ -7,8 +7,8 @@ Real pipeline:
   PDF text -> spaCy skill extraction -> HF API embeddings -> cosine similarity -> hybrid score
 """
 
+import asyncio
 import logging
-import math
 import os
 import re
 import tempfile
@@ -214,7 +214,6 @@ async def get_embedding_hf(text: str) -> Optional[List[float]]:
             except Exception as e:
                 logger.error(f"HF API request failed: {e}")
                 if attempt < 2:
-                    import asyncio
                     await asyncio.sleep(2)
     return None
 
@@ -317,8 +316,6 @@ async def screen_resumes(
     include_fairness: bool = Form(default=True),
     embedding_model: str = Form(default="all-MiniLM-L6-v2"),
 ):
-    import asyncio
-
     if not files:
         raise HTTPException(status_code=400, detail="At least one resume file required")
     if not job_description.strip():
