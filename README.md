@@ -2,77 +2,128 @@
 
 **Live Demo: https://ai-resume-screener-sepia.vercel.app**
 
-> Upload resumes + paste a job description. Get ranked candidates with scores, skill analysis, and AI explanations in seconds.
+> Upload resumes + paste a job description. Get ranked candidates with real AI scores, skill analysis, and explanations in seconds.
 
 ---
 
-## What It Does
+## Architecture
 
-Paste a job description, upload PDF/DOCX resumes, and the system:
+```
+Browser (Vercel)
+    |
+    |-- LOAD DEMO button --> instant results (no upload needed)
+    |
+    |-- Upload PDF/DOCX + Job Description
+            |
+            v
+    Render ML Backend (Python FastAPI)
+            |
+            |-- PyMuPDF: extract text from PDF
+            |-- spaCy en_core_web_sm: NER + skill extraction
+            |-- sentence-transformers all-MiniLM-L6-v2: 384-dim embeddings
+            |-- FAISS IndexFlatIP: cosine similarity search
+            |-- Hybrid score: 0.7 x cosine + 0.3 x IDF-weighted skill coverage
+            |-- LLM explanation (GPT-4o if OPENAI_API_KEY set, else template)
+            |-- Fairlearn: four-fifths rule fairness check
+            |
+            v
+    Ranked candidates with scores 0-100, explanations, fairness report
+```
 
-1. Extracts text and skills from each resume
-2. Scores every candidate 0-100 using a hybrid formula
-3. Ranks them with plain-English AI explanations
-4. Flags potential bias and hidden gems
-5. Exports results to CSV
+---
 
-No signup. No API key needed. Hit **LOAD DEMO** to see it instantly.
+## What Is Actually Running
+
+### ML Backend (Render)
+`https://ai-resume-screener-api-5iq6.onrender.com`
+
+Real sentence-transformers pipeline:
+
+```python
+from sentence_transformers import SentenceTransformer, util
+model = SentenceTransformer('all-MiniLM-L6-v2')  # 384-dim vectors
+
+resume_vec = model.encode(resume_text, convert_to_tensor=True)
+jd_vec     = model.encode(job_description, convert_to_tensor=True)
+cosine     = util.cos_sim(resume_vec, jd_vec).item()  # semantic similarity
+
+skill_score = sum(IDF[s] for s in matched_skills) / sum(IDF[s] for s in required_skills)
+final_score = round((0.7 * cosine + 0.3 * skill_score) * 100, 1)
+```
+
+### Frontend (Vercel)
+`https://ai-resume-screener-sepia.vercel.app`
+
+Next.js 15 + React 19 + Zustand + Recharts + Framer Motion
 
 ---
 
 ## Tech Stack
 
-### Running on Vercel right now
+| Layer | Technology | Version | Notes |
+|-------|-----------|---------|-------|
+| Semantic Embeddings | sentence-transformers | 2.x | all-MiniLM-L6-v2, 384-dim |
+| Vector Search | FAISS IndexFlatIP | 1.7.x | cosine similarity |
+| NLP / NER | spaCy | 3.6+ | en_core_web_sm |
+| PDF Parsing | PyMuPDF (fitz) | 1.23+ | primary; pdfplumber fallback |
+| Fairness | Fairlearn | 0.9+ | four-fifths rule |
+| LLM (optional) | OpenAI GPT-4o | API | set OPENAI_API_KEY |
+| API | FastAPI | 0.104+ | async, OpenAPI at /docs |
+| Frontend | Next.js | 15.5 | App Router, React 19 |
+| State | Zustand | 5.0 | client state |
+| Charts | Recharts | 2.15 | bar + radar |
+| Frontend Deploy | Vercel | -- | auto-deploy on push |
+| Backend Deploy | Render | -- | Docker, free tier |
 
-| Layer | Technology | Detail |
-|-------|-----------|--------|
-| Frontend | Next.js 15 + React 19 | App Router, Tailwind CSS, Framer Motion |
-| State | Zustand 5 | Client-side state management |
-| Charts | Recharts 2 | Bar chart + Radar comparison |
-| API | Next.js Route Handler | `/app/api/screen/route.ts` on Vercel Node runtime |
-| Scoring | TF-IDF cosine similarity | Lightweight, no ML deps, runs in under 1s |
-| Skill matching | IDF-weighted coverage | 200+ skills, rarer skills worth more |
-| Hidden gem detection | Score gap analysis | Flags semantic >> keyword candidates |
-| Deployment | Vercel | Auto-deploy on push to main |
+---
 
-### Scoring formula
+## Scoring Formula
 
 ```
-hybrid_score = 0.7 x tfidf_similarity(resume, jd) + 0.3 x idf_skill_coverage
+final_score = round((alpha * cosine_similarity + (1-alpha) * skill_score) * 100, 1)
 
-idf_skill_coverage = sum(IDF[skill] for matched skills)
-                     / sum(IDF[skill] for all required skills)
-
-IDF weights: faiss=3.2, pytorch=2.4, python=1.5, git=1.2
-Rarer / more specialised skills count more.
+where:
+  alpha           = semantic_weight (default 0.7, tunable in UI)
+  cosine_similarity = cosine(embed(resume), embed(JD))  in [0, 1]
+  skill_score     = sum(IDF[s] for s in matched) / sum(IDF[s] for s in required)
+  IDF weights     = faiss:3.2, rag:3.5, mcp:3.4, pytorch:2.4, python:1.5
 ```
 
 ---
 
-## AI and LLM Integration
+## LLM Integration
 
-The live demo uses TF-IDF + IDF-weighted skill scoring — no API key needed.
+The live demo uses template-based explanations by default.
 
-To upgrade to real LLM-powered explanations, add one environment variable in Vercel:
+To enable GPT-4o explanations, add one env var in Render dashboard:
 
 ```bash
-# Vercel Dashboard -> Settings -> Environment Variables
-OPENAI_API_KEY=sk-...   # enables GPT-4o explanations
+OPENAI_API_KEY=sk-...   # GPT-4o explanations
 
-# Or swap to any other provider in app/api/screen/route.ts:
-# Anthropic Claude  -> import Anthropic from '@anthropic-ai/sdk'
-# Google Gemini     -> import { GoogleGenerativeAI } from '@google/generative-ai'
-# HuggingFace free  -> fetch('https://api-inference.huggingface.co/...')
+# Or swap to any other provider in backend/main.py:
+# Anthropic Claude  -> import anthropic
+# Google Gemini     -> import google.generativeai
+# HuggingFace free  -> requests.post('https://api-inference.huggingface.co/...')
 ```
 
 The scoring pipeline is model-agnostic. The LLM only generates the explanation text.
-Swap the provider in one function, everything else stays the same.
+
+---
+
+## Performance Note
+
+The ML backend runs on **Render free tier** which spins down after 15 min of inactivity.
+
+- **First request after inactivity:** 30-60 seconds (model loading + cold start)
+- **Subsequent requests:** 3-8 seconds (model cached in memory)
+- **What loads:** sentence-transformers all-MiniLM-L6-v2 (~90MB) + spaCy
+
+The frontend shows a warning banner and pipeline progress during processing.
+If the first request fails, click TRY AGAIN -- the model will already be loaded.
 
 ---
 
 ## The Hidden Gem Problem
-
-The core value of semantic scoring over keyword matching:
 
 ```
 JD says:                    Candidate writes:
@@ -81,7 +132,7 @@ JD says:                    Candidate writes:
 "bias detection"      ->    "algorithmic fairness, parity evaluation"
 
 Keyword match score:  12%   <- buried at the bottom
-Semantic score:       78%   <- correctly surfaced near the top
+Semantic AI score:    78%   <- correctly surfaced near the top
 ```
 
 The system detects these automatically and flags them with a star badge.
@@ -93,23 +144,31 @@ The system detects these automatically and flags them with a star badge.
 ```
 /
 |-- app/
-|   |-- api/screen/route.ts   <- scoring engine + API endpoint
+|   |-- api/screen/route.ts   <- Next.js API route (TF-IDF fallback)
 |   |-- page.tsx              <- main UI + demo mode
 |   |-- layout.tsx
 |   `-- globals.css
 |-- components/
-|   |-- CandidateCard.tsx     <- ranked result card with scores
+|   |-- CandidateCard.tsx     <- ranked result with scores + skills
 |   |-- ResultsView.tsx       <- results page + CSV export
 |   |-- AnalyticsCharts.tsx   <- bar chart + radar comparison
-|   |-- FileUpload.tsx        <- drag-and-drop PDF/DOCX upload
+|   |-- FileUpload.tsx        <- drag-and-drop PDF/DOCX
 |   |-- JobDescriptionForm.tsx
-|   `-- LoadingScreen.tsx
+|   `-- LoadingScreen.tsx     <- pipeline progress + cold start warning
 |-- store/
-|   `-- screeningStore.ts     <- Zustand state
+|   `-- screeningStore.ts     <- Zustand state + API calls
+|-- backend/
+|   |-- main.py               <- FastAPI server (real ML pipeline)
+|   |-- requirements.txt      <- torch, sentence-transformers, faiss, spacy
+|   `-- Dockerfile            <- Docker image for Render
+|-- src/                      <- Python ML modules
+|   |-- parsers/              <- PyMuPDF, pdfplumber, spaCy NER
+|   |-- embeddings/           <- sentence-transformers, FAISS, cache
+|   |-- ranking/              <- hybrid scoring, fairness, LLM service
+|   `-- models/               <- ResumeData, JobDescription, RankedCandidate
 |-- data/sample_resumes/      <- 6 synthetic candidates for demo
-|-- package.json
-|-- next.config.ts
-`-- vercel.json
+|-- render.yaml               <- Render deployment config
+`-- vercel.json               <- Vercel deployment config
 ```
 
 ---
@@ -132,14 +191,16 @@ Six synthetic candidates in `data/sample_resumes/` demonstrate the system:
 ## What Works Right Now
 
 - Resume upload (PDF + DOCX), drag-and-drop
-- Job description parsing + skill extraction (200+ skills)
-- Hybrid scoring: TF-IDF semantic + IDF-weighted skill coverage
-- Candidate ranking with plain-English explanations
+- Real sentence-transformers semantic embeddings (all-MiniLM-L6-v2)
+- FAISS cosine similarity vector search
+- spaCy NER + 200+ skill taxonomy extraction
+- Hybrid scoring: 0.7 x semantic + 0.3 x IDF-weighted skill coverage
+- Candidate ranking with AI-generated explanations
 - Hidden gem detection (semantic >> keyword candidates)
 - Score breakdown: semantic / skill / overall per candidate
 - Matched vs missing skills per candidate
 - Analytics: bar chart + radar comparison for top 3
-- Fairness summary with bias flags
+- Fairness analysis (four-fifths rule)
 - CSV export
 - Demo mode (LOAD DEMO - no upload needed)
 - Configurable semantic/skill weight slider
@@ -149,24 +210,10 @@ Six synthetic candidates in `data/sample_resumes/` demonstrate the system:
 ## Future Scope
 
 - Add `OPENAI_API_KEY` for GPT-4o explanations (one env var, zero code change)
-- Swap to `sentence-transformers` + FAISS for real semantic embeddings (Docker deploy)
+- Upgrade Render to paid tier to eliminate cold starts
+- Add Pinecone/Qdrant for persistent vector storage at scale
 - ATS integrations (Greenhouse, Lever)
 
 ---
 
 **Built by [Kunal Saini](https://github.com/kunal-gh)**
-
----
-
-## Performance Note
-
-The AI backend runs on **Render free tier** which spins down after 15 minutes of inactivity.
-
-- **First request after inactivity:** ~30-60 seconds (model loading + cold start)
-- **Subsequent requests:** ~3-8 seconds (model cached in memory)
-- **What loads on first request:** sentence-transformers all-MiniLM-L6-v2 (~90MB) + spaCy en_core_web_sm
-
-The frontend shows a warning banner during the cold start. Just wait — it will complete.
-
-To eliminate cold starts, upgrade Render to a paid instance (\/month) or self-host via Docker.
-
