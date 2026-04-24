@@ -36,7 +36,7 @@ export default function JobDescriptionForm() {
             value={jobTitle}
             onChange={(e) => setJobTitle(e.target.value)}
             placeholder="e.g., Senior Software Engineer"
-            className="brutalist-input text-sm py-2"
+            className="brutalist-input py-2"
           />
         </div>
 
@@ -46,7 +46,7 @@ export default function JobDescriptionForm() {
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
             placeholder="Enter job requirements, skills, responsibilities..."
-            className="brutalist-input flex-1 resize-none text-sm min-h-0"
+            className="brutalist-input flex-1 resize-none min-h-0"
           />
         </div>
       </div>

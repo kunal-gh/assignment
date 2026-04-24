@@ -39,8 +39,8 @@
 
   .brutalist-input {
     @apply w-full px-4 py-3 bg-white border-4 border-black
-           focus:outline-none font-medium text-black
-           placeholder:text-gray-400;
+           focus:outline-none font-medium text-black text-base
+           placeholder:text-gray-400 placeholder:text-base placeholder:font-medium;
     transition: border-color 0.1s ease;
   }
 
