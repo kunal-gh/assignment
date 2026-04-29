@@ -56,13 +56,10 @@ interface ScreeningState {
   processResumes: () => Promise<void>;
 }
 
-// Call the real ML backend directly — bypasses Vercel's 60-second serverless timeout.
-// CORS is enabled on the backend (allow_origins=["*"]).
+// Direct call to Render ML backend from the browser.
+// CORS is enabled on the backend: allow_origins=["*"].
+// We do NOT use the /api/screen proxy to avoid Vercel's 60s serverless timeout.
 const RENDER_ML_BACKEND = 'https://ai-resume-screener-api-5iq6.onrender.com/screen';
-
-function getApiUrl(): string {
-  return RENDER_ML_BACKEND;
-}
 
 const STATUS_STAGES = [
   { at: 0,  msg: 'Waking up AI backend...' },
@@ -106,7 +103,6 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
 
     set({ isProcessing: true, progress: 0, error: null, results: null, statusMessage: 'Starting...' });
 
-    // Animate progress with stage messages
     let currentProgress = 0;
     const progressInterval = setInterval(() => {
       currentProgress = Math.min(currentProgress + 2, 92);
@@ -115,7 +111,6 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
     }, 800);
 
     try {
-      // The Next.js route proxies to Render server-side (no CORS)
       set({ statusMessage: 'Connecting to AI backend...' });
 
       const formData = new FormData();
@@ -125,21 +120,38 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
       formData.append('include_fairness', state.includeFairness.toString());
       state.files.forEach((f) => formData.append('files', f));
 
-      // 3-minute timeout for cold start + ML inference
+      // 4-minute timeout — covers Render cold start (~60s) + ML inference
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 180000);
+      const timeout = setTimeout(() => controller.abort(), 240000);
 
-      const response = await fetch(getApiUrl(), {
-        method: 'POST',
-        body: formData,
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
+      let response: Response;
+      try {
+        response = await fetch(RENDER_ML_BACKEND, {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal,
+        });
+      } catch (fetchErr) {
+        // Network errors: err.message is often empty or generic in browsers
+        const raw = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+        const detail = raw && raw !== 'Failed to fetch' ? raw : 'network error';
+        throw new Error(
+          `Could not reach the AI backend (${detail}). It may be waking up — please wait 30 seconds and try again.`
+        );
+      } finally {
+        clearTimeout(timeout);
+      }
+
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        let msg = `Server error: ${response.status}`;
-        try { const d = await response.json(); msg = d.error || d.detail || msg; } catch { /* ignore */ }
+        let msg = `AI Backend returned HTTP ${response.status}`;
+        try {
+          const d = await response.json();
+          if (typeof d.detail === 'string') msg = d.detail;
+          else if (Array.isArray(d.detail)) msg = d.detail.map((e: { msg: string }) => e.msg).join(', ');
+          else if (d.error) msg = d.error;
+        } catch { /* response was not JSON */ }
         throw new Error(msg);
       }
 
@@ -153,9 +165,10 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
       clearInterval(progressInterval);
       const msg = err instanceof Error
         ? (err.name === 'AbortError'
-          ? 'Request timed out. The AI backend may be waking up — please try again in 30 seconds.'
-          : err.message)
-        : String(err);
+            ? 'Request timed out after 4 minutes. The AI backend is unavailable — please try again.'
+            : (err.message || 'Unknown error — check browser DevTools console for details.'))
+        : `Unexpected error: ${String(err)}`;
+      console.error('[AI Resume Screener] processResumes failed:', err);
       set({ isProcessing: false, progress: 0, error: msg, statusMessage: '' });
     }
   },
