@@ -10,7 +10,7 @@ import LoadingScreen from '@/components/LoadingScreen';
 import { useScreeningStore } from '@/store/screeningStore';
 
 export default function Home() {
-  const { isProcessing, processResumes, jobTitle, jobDescription, files } = useScreeningStore();
+  const { isProcessing, processResumes, jobTitle, jobDescription, files, error } = useScreeningStore();
   const [step, setStep] = useState<'upload' | 'results'>('upload');
 
   const canProcess =
@@ -51,7 +51,14 @@ export default function Home() {
           animate={{ opacity: 1 }}
           className="max-w-6xl mx-auto space-y-6"
         >
-          {!canProcess && (
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+              <p className="font-bold">Error</p>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {!canProcess && !error && (
             <p className="text-center text-sm font-bold tracking-widest uppercase text-gray-400">
               Upload resumes + enter job title &amp; description to continue
             </p>

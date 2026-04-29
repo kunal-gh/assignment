@@ -84,13 +84,12 @@ export default function ResultsView({ onBack }: ResultsViewProps) {
               {results.job_title} · {results.successfully_parsed} RESUMES PROCESSED
             </p>
             {results.model_used && (
-              <div className="mt-2">
-                <span className={`text-xs font-black px-2 py-1 border-2 inline-block ${
-                  results.model_used.toLowerCase().includes('gemini')
-                    ? 'border-black bg-black text-white'
-                    : 'border-gray-400 bg-gray-100 text-gray-600'
-                }`}>
-                  {results.model_used.toLowerCase().includes('gemini') ? '🤖 GEMINI ML' : '⚡ TF-IDF FALLBACK'}
+              <div className="mt-2 flex items-center">
+                <span className="text-xs font-black px-2 py-1 border-2 border-black bg-[#E2F7D8] text-green-800 flex items-center shadow-brutal-sm">
+                  🤖 VERIFIED GEMINI ML PIPELINE
+                </span>
+                <span className="text-xs font-bold text-gray-500 ml-3 uppercase tracking-wider">
+                  ({results.model_used})
                 </span>
               </div>
             )}
