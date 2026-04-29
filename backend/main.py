@@ -12,6 +12,7 @@ import re
 import tempfile
 import time
 import uuid
+import shutil
 from typing import Any, Dict, List, Optional
 
 # Load .env for local development (no-op on Render where env vars are set in dashboard)
@@ -50,7 +51,9 @@ if GOOGLE_API_KEY:
     except Exception as e:
         logger.error(f"Gemini configuration failed: {e}")
 else:
-    logger.warning("GOOGLE_API_KEY not set — TF-IDF fallback will be used for embeddings; scanned PDFs will not OCR.")
+    logger.warning(
+        "GOOGLE_API_KEY not set — TF-IDF fallback will be used for embeddings; scanned PDFs will not OCR."
+    )
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -223,11 +226,13 @@ def _gemini_vision_ocr_sync(file_path: str, filename: str) -> str:
     from google import genai as _genai
     from google.genai import types as _types
 
-    client = _genai.Client(api_key=GOOGLE_API_KEY)
+    if not _gemini_client:
+        return ""
+
     try:
         with open(file_path, "rb") as f:
             pdf_bytes = f.read()
-        response = client.models.generate_content(
+        response = _gemini_client.models.generate_content(
             model=GEMINI_VISION_MODEL,
             contents=[
                 _types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
@@ -258,10 +263,16 @@ async def extract_text(file_path: str, filename: str) -> str:
     if filename.lower().endswith(".pdf"):
         text = extract_text_from_pdf_bytes(data)
         if len(text.strip()) < 100 and _gemini_ready:
-            logger.info(f"Scanned PDF detected: {filename} — invoking Gemini Vision OCR")
-            vision_text = await asyncio.to_thread(_gemini_vision_ocr_sync, file_path, filename)
+            logger.info(
+                f"Scanned PDF detected: {filename} — invoking Gemini Vision OCR"
+            )
+            vision_text = await asyncio.to_thread(
+                _gemini_vision_ocr_sync, file_path, filename
+            )
             if vision_text and len(vision_text.strip()) > len(text.strip()):
-                logger.info(f"Gemini Vision OCR succeeded for {filename} ({len(vision_text)} chars)")
+                logger.info(
+                    f"Gemini Vision OCR succeeded for {filename} ({len(vision_text)} chars)"
+                )
                 return vision_text
         return text
 
@@ -275,11 +286,20 @@ async def extract_text(file_path: str, filename: str) -> str:
 
 
 def extract_skills(text: str) -> List[str]:
-    norm = text.lower().replace("(", " ").replace(")", " ").replace(",", " ").replace(";", " ").replace("-", " ")
+    norm = (
+        text.lower()
+        .replace("(", " ")
+        .replace(")", " ")
+        .replace(",", " ")
+        .replace(";", " ")
+        .replace("-", " ")
+    )
     found = set()
     for variant, canonical in sorted(SKILL_LOOKUP.items(), key=lambda x: -len(x[0])):
         if len(variant) <= 4:
-            if re.search(r"(?:^|[\s,;(])" + re.escape(variant) + r"(?:[\s,;)]|$)", norm):
+            if re.search(
+                r"(?:^|[\s,;(])" + re.escape(variant) + r"(?:[\s,;)]|$)", norm
+            ):
                 found.add(canonical)
         else:
             if variant in norm:
@@ -295,8 +315,10 @@ def _gemini_embed_sync(texts: List[str], task_type: str) -> List[List[float]]:
     from google import genai as _genai
     from google.genai import types as _types
 
-    client = _genai.Client(api_key=GOOGLE_API_KEY)
-    response = client.models.embed_content(
+    if not _gemini_client:
+        return []
+
+    response = _gemini_client.models.embed_content(
         model=GEMINI_EMBED_MODEL,
         contents=texts,
         config=_types.EmbedContentConfig(
@@ -307,40 +329,63 @@ def _gemini_embed_sync(texts: List[str], task_type: str) -> List[List[float]]:
     return [e.values for e in response.embeddings]
 
 
-async def get_embeddings_batch(texts: List[str], task_type: str = "retrieval_document") -> List[Optional[List[float]]]:
+async def get_embeddings_batch(
+    texts: List[str], task_type: str = "retrieval_document"
+) -> List[Optional[List[float]]]:
     """
-    Async wrapper for Gemini batch embedding.
+    Async wrapper for Gemini batch embedding with chunking.
     Retries with exponential backoff on rate limit (429) or transient errors.
     Returns None entries where embedding failed.
     """
     if not _gemini_ready or not texts:
         return [None] * len(texts)
 
-    truncated = [t[:8000] for t in texts]
+    # Stricter truncation (6500 chars) to stay safely under 2048 token limit
+    truncated = [t[:6500] for t in texts]
+    all_embeddings = []
 
-    for attempt in range(3):
-        try:
-            embeddings = await asyncio.to_thread(_gemini_embed_sync, truncated, task_type)
-            if len(embeddings) == len(texts):
-                return embeddings
-            # Pad if partial result returned
-            return embeddings + [None] * (len(texts) - len(embeddings))
-        except Exception as e:
-            err = str(e)
-            if any(k in err for k in ("429", "RESOURCE_EXHAUSTED", "quota")):
-                wait = 2**attempt * 2
-                logger.warning(f"Gemini rate limit — backing off {wait}s (attempt {attempt + 1}/3)")
-                await asyncio.sleep(wait)
-            elif any(k in err for k in ("503", "unavailable")):
-                wait = 2**attempt
-                logger.warning(f"Gemini unavailable — retrying in {wait}s")
-                await asyncio.sleep(wait)
-            else:
-                logger.error(f"Gemini embedding error (attempt {attempt + 1}): {e}")
+    # Process in chunks of 50 to avoid payload size limits
+    chunk_size = 50
+    for i in range(0, len(truncated), chunk_size):
+        chunk = truncated[i : i + chunk_size]
+        chunk_embeddings = None
+
+        for attempt in range(3):
+            try:
+                embeddings = await asyncio.to_thread(
+                    _gemini_embed_sync, chunk, task_type
+                )
+                if len(embeddings) == len(chunk):
+                    chunk_embeddings = embeddings
+                    break
+                # Pad if partial result returned
+                chunk_embeddings = embeddings + [None] * (len(chunk) - len(embeddings))
                 break
+            except Exception as e:
+                err = str(e)
+                if any(k in err for k in ("429", "RESOURCE_EXHAUSTED", "quota")):
+                    wait = 2**attempt * 2
+                    logger.warning(
+                        f"Gemini rate limit — backing off {wait}s (attempt {attempt + 1}/3)"
+                    )
+                    await asyncio.sleep(wait)
+                elif any(k in err for k in ("503", "unavailable")):
+                    wait = 2**attempt
+                    logger.warning(f"Gemini unavailable — retrying in {wait}s")
+                    await asyncio.sleep(wait)
+                else:
+                    logger.error(f"Gemini embedding error (attempt {attempt + 1}): {e}")
+                    break
 
-    logger.error("All Gemini embedding attempts failed — returning None vectors")
-    return [None] * len(texts)
+        if chunk_embeddings is None:
+            logger.error(
+                f"All Gemini embedding attempts failed for chunk {i//chunk_size} — returning None vectors"
+            )
+            chunk_embeddings = [None] * len(chunk)
+
+        all_embeddings.extend(chunk_embeddings)
+
+    return all_embeddings
 
 
 # ─── TF-IDF Fallback (when GOOGLE_API_KEY not set) ────────────────────────────
@@ -419,7 +464,11 @@ def build_explanation(
     using_gemini: bool = True,
 ) -> str:
     pct = round(hybrid * 100, 1)
-    fit = "excellent" if hybrid >= 0.8 else "good" if hybrid >= 0.6 else "moderate" if hybrid >= 0.4 else "limited"
+    fit = (
+        "excellent"
+        if hybrid >= 0.8
+        else "good" if hybrid >= 0.6 else "moderate" if hybrid >= 0.4 else "limited"
+    )
 
     parts = []
 
@@ -430,13 +479,20 @@ def build_explanation(
             f"semantic alignment ({sem:.0%}) is significantly higher than keyword match ({sk:.0%})."
         )
 
-    parts.append(f"{name} shows {fit} fit for the {title} position " f"with an overall score of {pct}% (Rank #{rank}).")
+    parts.append(
+        f"{name} shows {fit} fit for the {title} position "
+        f"with an overall score of {pct}% (Rank #{rank})."
+    )
 
     if using_gemini:
         if sem >= 0.65:
-            parts.append(f"Strong semantic alignment ({sem:.0%}) — resume content closely matches the job description.")
+            parts.append(
+                f"Strong semantic alignment ({sem:.0%}) — resume content closely matches the job description."
+            )
         elif sem >= 0.4:
-            parts.append(f"Moderate semantic match ({sem:.0%}) shows relevant background.")
+            parts.append(
+                f"Moderate semantic match ({sem:.0%}) shows relevant background."
+            )
     else:
         parts.append("Scored using keyword-based TF-IDF (Gemini API unavailable).")
 
@@ -487,7 +543,11 @@ async def health():
         "status": "healthy",
         "embedding_model": GEMINI_EMBED_MODEL,
         "vision_model": GEMINI_VISION_MODEL,
-        "embedding_source": "Google Gemini API" if _gemini_ready else "TF-IDF fallback (no GOOGLE_API_KEY)",
+        "embedding_source": (
+            "Google Gemini API"
+            if _gemini_ready
+            else "TF-IDF fallback (no GOOGLE_API_KEY)"
+        ),
         "ocr_available": _gemini_ready,
         "gemini_ready": _gemini_ready,
         "embedding_dimensions": EMBEDDING_DIM,
@@ -541,17 +601,20 @@ async def screen_resumes(
         file_paths.append((dest, fname))
 
     if not file_paths:
-        raise HTTPException(status_code=400, detail="No valid PDF or DOCX files provided")
+        raise HTTPException(
+            status_code=400, detail="No valid PDF or DOCX files provided"
+        )
 
     try:
-        # ── Layer 1: Extract text from all files ──────────────────────────────
+        # ── Layer 1: Extract text from all files (Concurrent) ──────────────────────────────
         logger.info(f"Extracting text from {len(file_paths)} file(s)...")
-        resume_texts: List[str] = []
-        resume_names: List[str] = []
 
-        for file_path, filename in file_paths:
-            text = await extract_text(file_path, filename)
-            resume_texts.append(text)
+        # Concurrently extract text for all resumes to avoid sequential OCR bottleneck
+        extraction_tasks = [extract_text(fp, fn) for fp, fn in file_paths]
+        resume_texts = await asyncio.gather(*extraction_tasks)
+
+        resume_names: List[str] = []
+        for _, filename in file_paths:
             stem = re.sub(r"\.(pdf|docx)$", "", filename, flags=re.IGNORECASE)
             stem = re.sub(r"[_\-]", " ", stem)
             name = " ".join(p.capitalize() for p in stem.split()[:3]) or "Candidate"
@@ -570,7 +633,9 @@ async def screen_resumes(
         jd_emb_list = await get_embeddings_batch([jd_text], task_type="retrieval_query")
         jd_embedding = jd_emb_list[0] if jd_emb_list else None
 
-        resume_embeddings = await get_embeddings_batch(resume_texts, task_type="retrieval_document")
+        resume_embeddings = await get_embeddings_batch(
+            resume_texts, task_type="retrieval_document"
+        )
 
         # ── Layer 4: Score each candidate ─────────────────────────────────────
         candidates = []
@@ -592,7 +657,9 @@ async def screen_resumes(
                 logger.warning(f"TF-IDF fallback used for: {name}")
 
             sk = idf_skill_score(resume_skills, jd_skills)
-            hybrid = min(1.0, max(0.0, semantic_weight * sem + (1 - semantic_weight) * sk))
+            hybrid = min(
+                1.0, max(0.0, semantic_weight * sem + (1 - semantic_weight) * sk)
+            )
             yrs = extract_years_experience(content)
 
             candidates.append(
@@ -680,7 +747,8 @@ async def list_models():
                 "source": "Google Gemini API",
                 "task_types": ["retrieval_query (JD)", "retrieval_document (resumes)"],
                 "description": (
-                    "Batch embeddings — all resumes in one API call. " "Gemini Vision OCR auto-activates for scanned PDFs."
+                    "Batch embeddings — all resumes in one API call. "
+                    "Gemini Vision OCR auto-activates for scanned PDFs."
                 ),
                 "is_default": True,
                 "ready": _gemini_ready,
