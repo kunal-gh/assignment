@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const maxDuration = 60; // Max allowed for Vercel Hobby plan
+
 /**
  * Next.js API Route — proxies to the real ML backend on Render.
  *

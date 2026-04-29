@@ -59,7 +59,7 @@ interface ScreeningState {
 // Direct call to Render ML backend from the browser.
 // CORS is enabled on the backend: allow_origins=["*"].
 // We do NOT use the /api/screen proxy to avoid Vercel's 60s serverless timeout.
-const RENDER_ML_BACKEND = 'https://ai-resume-screener-api-5iq6.onrender.com/screen';
+const RENDER_ML_BACKEND = '/api/screen';
 
 const STATUS_STAGES = [
   { at: 0,  msg: 'Waking up AI backend...' },
