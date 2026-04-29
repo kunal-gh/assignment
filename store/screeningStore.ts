@@ -56,9 +56,10 @@ interface ScreeningState {
   processResumes: () => Promise<void>;
 }
 
-// Always use the Next.js API route — it proxies to Render server-side (no CORS issues)
+// Call the real ML backend directly to bypass Vercel's 60-second serverless timeout limit.
+// The backend has CORS allow_origins=["*"] so this is perfectly safe and robust.
 function getApiUrl(): string {
-  return '/api/screen';
+  return process.env.NEXT_PUBLIC_API_URL || 'https://ai-resume-screener-api-5iq6.onrender.com/screen';
 }
 
 const STATUS_STAGES = [
