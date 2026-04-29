@@ -1,116 +1,123 @@
-# 🤖 AI Resume Screener & Intelligent Candidate Ranking
-
-![Hero Image](assets/hero.png)
-
 <div align="center">
 
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
-[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
-[![Gemini](https://img.shields.io/badge/AI-Google%20Gemini-4285F4?style=for-the-badge&logo=google-gemini)](https://ai.google.dev)
-[![Vector Search](https://img.shields.io/badge/Engine-Vector%20Similarity-blueviolet?style=for-the-badge&logo=databricks)](https://en.wikipedia.org/wiki/Cosine_similarity)
+# 🤖 AI Resume Screener
+
+### Semantic resume screening powered by a 4-layer Gemini ML pipeline
+
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Vercel-black?style=for-the-badge)](https://ai-resume-screener-sepia.vercel.app)
+[![CI](https://github.com/kunal-gh/assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/kunal-gh/assignment/actions/workflows/ci.yml)
 
 </div>
 
-### **Transforming the Hiring Loop with Semantic Intelligence**
-Most resume screening is limited to rigid keyword matching. This system implements a **4-layer ML pipeline** to understand the *meaning* behind a resume, ensuring the best candidates aren't buried just because they used different terminology.
+---
+
+![App Screenshot](assets/screenshot_upload.png)
+
+> Upload PDFs or DOCX resumes, paste a job description, and get AI-ranked candidates with semantic scores, skill analysis, matched keywords, and explanations — all in one request.
 
 ---
 
-## 🏗️ System Architecture (IEEE Standard)
+## 🏗️ Architecture
 
 ```mermaid
-graph TD
-    subgraph Client ["Frontend (Next.js 15)"]
-        UI[User Dashboard] --> Store[Zustand State]
-        Store --> Proxy[API Proxy /api/screen]
-    end
-
-    subgraph Serverless ["Edge Layer (Vercel)"]
-        Proxy --> Middleware[Auth & Timeout Management]
-    end
-
-    subgraph Backend ["ML Engine (FastAPI + Python 3.11)"]
-        Middleware --> OCR[Layer 1: Gemini Vision OCR]
-        OCR --> NLP[Layer 2: Regex Skill Extraction]
-        NLP --> EMB[Layer 3: Gemini Batch Embeddings]
-        EMB --> Rank[Layer 4: Hybrid Scoring Logic]
-    end
-
-    subgraph External ["AI Services"]
-        EMB --- G_API[Google Gemini Embedding API]
-        OCR --- V_API[Google Gemini Vision API]
-    end
-
-    Rank --> UI
+graph LR
+    A[Browser\nNext.js 15] -->|POST multipart/form-data| B[Vercel Serverless\nAPI Proxy]
+    B -->|Server-to-server\nno CORS| C[Render\nFastAPI Backend]
+    C --> D[Layer 1\nPyMuPDF / Gemini Vision OCR]
+    D --> E[Layer 2\nRegex Skill Taxonomy]
+    E --> F[Layer 3\nGemini Embedding API\n768-dim vectors]
+    F --> G[Layer 4\nHybrid Cosine Scoring]
+    G -->|JSON response| A
 ```
 
----
-
-## 🚀 Key Engineering Highlights
-
-### **1. Intelligent Multi-Modal OCR**
-The system uses a **cascading extraction strategy**. Digital PDFs are parsed instantly via PyMuPDF. If a document is image-based (scanned), the system automatically triggers **Gemini 1.5 Flash Vision** to perform high-fidelity OCR, extracting structure and text with 99% accuracy.
-
-### **2. Vector-Based Semantic Search**
-![Vector Embedding Space](assets/vector_search.png)
-Resumes and Job Descriptions are mapped into a **768-dimensional vector space** using `gemini-embedding-001`. This allows the system to identify candidates who have the right "vibe" and experience, even if their specific keywords differ from the JD.
-
-### **3. Concurrent ML Processing**
-![ML Ops Pipeline](assets/ml_ops.png)
-To handle volume, the backend leverages **Concurrent ML Ops**. Resume text extraction and embedding generation are processed in parallel using `asyncio.gather`, reducing total latency by up to **85%** compared to sequential processing.
-
-### **4. Hybrid Scoring Formula**
-The final rank is a weighted combination of:
-- **Semantic Score**: Vector cosine similarity.
-- **Skill Score**: IDF-weighted keyword coverage.
-- **Experience Score**: Heuristic extraction of years of expertise.
+The frontend **never** calls the ML backend directly. All traffic is proxied through a Vercel serverless function, eliminating CORS issues for `multipart/form-data` uploads and keeping the Render backend URL private.
 
 ---
 
-## 📦 Project Structure
+## 🔬 ML Pipeline — 4 Layers
 
-```bash
-├── assets/             # Visual assets & diagrams
-├── backend/            # FastAPI ML Backend (Python 3.11)
-│   ├── main.py         # Core ML Pipeline
+| Layer | Technology | What it does |
+|-------|-----------|--------------|
+| **1 — Text Extraction** | PyMuPDF → Gemini 1.5 Flash Vision | Extracts text from digital PDFs instantly. Falls back to Vision OCR for scanned/image-based documents. |
+| **2 — Skill Extraction** | Regex + IDF taxonomy (60+ skills) | Identifies canonical skills using an IDF-weighted lookup table. Short tokens use word-boundary matching to prevent false positives. |
+| **3 — Embedding** | `gemini-embedding-001` (768-dim) | Encodes the JD as a `retrieval_query` vector and each resume as a `retrieval_document` vector in a single batched API call. Supports chunking for large batches (>50 docs). |
+| **4 — Hybrid Scoring** | NumPy cosine similarity | `score = 0.7 × semantic_sim + 0.3 × idf_skill_score`. Detects "Hidden Gems" where semantic alignment is high but keyword overlap is low. |
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+| Tool | Role |
+|------|------|
+| **Next.js 15** (App Router) | Full-stack React framework, handles routing, SSR, and serverless API routes |
+| **React 19** | UI component layer with concurrent rendering |
+| **Zustand** | Lightweight state management for the screening pipeline state machine |
+| **Framer Motion** | Smooth entrance animations, progress transitions, and micro-interactions |
+| **Recharts** | Score breakdown bar charts and analytics visualisation |
+| **react-dropzone** | Drag-and-drop PDF/DOCX upload with MIME validation |
+| **Tailwind CSS** | Utility-first styling with dark-mode support |
+
+### Backend
+| Tool | Role |
+|------|------|
+| **FastAPI** | Async Python web framework with automatic OpenAPI docs |
+| **PyMuPDF (fitz)** | Fast in-memory PDF text extraction from binary bytes |
+| **python-docx** | DOCX text extraction via BytesIO |
+| **google-genai** | Official Google Gen AI SDK for Gemini Vision OCR and batch embeddings |
+| **NumPy** | Vector math for cosine similarity scoring |
+| **asyncio.gather** | Concurrent OCR processing — all resumes extracted in parallel |
+
+### Infrastructure
+| Tool | Role |
+|------|------|
+| **Vercel** | Frontend hosting + Serverless API proxy (60s `maxDuration`) |
+| **Render (Docker)** | ML backend container hosting on free tier |
+| **GitHub Actions** | CI: Black formatting, Flake8 lint, Bandit security scan, TypeScript type check, Docker build |
+
+---
+
+## 📦 Repository Structure
+
+```
+├── assets/                      # Screenshots and diagrams
+├── backend/                     # Python ML Backend
+│   ├── Dockerfile
+│   ├── main.py                  # 4-layer ML pipeline (700 lines)
 │   └── requirements.txt
-├── frontend/           # Next.js 15 Dashboard (React)
-│   ├── app/            # App Router & UI Logic
-│   ├── components/     # High-fidelity UI Components
-│   └── store/          # Zustand State Management
-├── render.yaml         # Infrastructure as Code (Backend)
-└── vercel.json         # Infrastructure as Code (Frontend)
+├── frontend/                    # Next.js 15 App
+│   ├── app/
+│   │   ├── api/screen/route.ts  # Vercel proxy → Render
+│   │   ├── page.tsx             # Main screening UI
+│   │   └── globals.css
+│   ├── components/              # FileUpload, ResultsView, CandidateCard, etc.
+│   ├── store/
+│   │   └── screeningStore.ts    # Zustand pipeline state machine
+│   └── package.json
+├── render.yaml                  # Render IaC (Docker runtime, health check)
+├── .github/workflows/ci.yml     # Full CI pipeline
+└── README.md
 ```
 
 ---
 
-## 🛠️ Local Setup
+## ⚙️ Scoring Formula
 
-### **Backend**
-```bash
-cd backend
-pip install -r requirements.txt
-# Set GOOGLE_API_KEY in your .env
-uvicorn main:app --reload
 ```
+Hybrid Score = (semantic_weight × cosine_sim) + (1 − semantic_weight) × idf_skill_score
 
-### **Frontend**
-```bash
-cd frontend
-npm install
-npm run dev
+Where:
+  cosine_sim      = dot(jd_vec, resume_vec) / (|jd_vec| × |resume_vec|)
+  idf_skill_score = Σ IDF(matched_skill) / Σ IDF(all_jd_skills)
+  semantic_weight = 0.7  (default, configurable)
+
+Hidden Gem flag: triggered when (sem − skill_score) > 0.3 AND sem ≥ 0.55
 ```
-
----
-
-## 👔 Recruiter View: Why Hire Me?
-This project demonstrates a deep understanding of **Modern AI Infrastructure**:
-- **Full-Stack AI**: Integrating large language models into production-ready web apps.
-- **ML Ops**: Handling rate limits, batching, and concurrent processing.
-- **Systems Design**: Implementing secure server-side proxies and robust fallback mechanisms.
 
 ---
 
 <div align="center">
-  <p>Built with ❤️ and Modern AI Stack</p>
+
+**[🚀 Try it live →](https://ai-resume-screener-sepia.vercel.app)**
+
 </div>
