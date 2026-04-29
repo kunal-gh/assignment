@@ -52,9 +52,11 @@ graph TD
 The system uses a **cascading extraction strategy**. Digital PDFs are parsed instantly via PyMuPDF. If a document is image-based (scanned), the system automatically triggers **Gemini 1.5 Flash Vision** to perform high-fidelity OCR, extracting structure and text with 99% accuracy.
 
 ### **2. Vector-Based Semantic Search**
+![Vector Embedding Space](assets/vector_search.png)
 Resumes and Job Descriptions are mapped into a **768-dimensional vector space** using `gemini-embedding-001`. This allows the system to identify candidates who have the right "vibe" and experience, even if their specific keywords differ from the JD.
 
 ### **3. Concurrent ML Processing**
+![ML Ops Pipeline](assets/ml_ops.png)
 To handle volume, the backend leverages **Concurrent ML Ops**. Resume text extraction and embedding generation are processed in parallel using `asyncio.gather`, reducing total latency by up to **85%** compared to sequential processing.
 
 ### **4. Hybrid Scoring Formula**
