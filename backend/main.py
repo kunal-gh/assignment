@@ -1,10 +1,8 @@
 """
-AI Resume Screener — FastAPI Backend
-Uses HuggingFace Inference API for embeddings (no local model loading).
-Fits in 512MB RAM — works on Render free tier.
-
-Real pipeline:
-  PDF text -> spaCy skill extraction -> HF API embeddings -> cosine similarity -> hybrid score
+AI Resume Screener — FastAPI Backend v3.0
+Embedding: Google Gemini (gemini-embedding-001) — batch API, task-aware
+OCR: PyMuPDF for digital PDFs → Gemini Vision fallback for scanned PDFs
+Parsing: python-docx (BytesIO) for DOCX files
 """
 
 import asyncio
@@ -16,7 +14,13 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional
 
-import httpx
+# Load .env for local development (no-op on Render where env vars are set in dashboard)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # python-dotenv not installed — env vars must be set in the environment directly
+
 import numpy as np
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,16 +31,31 @@ logger = logging.getLogger(__name__)
 
 # ─── Config ───────────────────────────────────────────────────────────────────
 
-HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")
-HF_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{HF_MODEL}"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+GEMINI_EMBED_MODEL = "models/gemini-embedding-001"
+GEMINI_VISION_MODEL = "gemini-1.5-flash"
+EMBEDDING_DIM = 768  # truncated from 3072
+
+# Configure Gemini client using new google-genai SDK (google-generativeai is deprecated)
+_gemini_ready = False
+_gemini_client = None
+if GOOGLE_API_KEY:
+    try:
+        from google import genai as _genai_module
+        _gemini_client = _genai_module.Client(api_key=GOOGLE_API_KEY)
+        _gemini_ready = True
+        logger.info("Google Gemini client configured (new google-genai SDK).")
+    except Exception as e:
+        logger.error(f"Gemini configuration failed: {e}")
+else:
+    logger.warning("GOOGLE_API_KEY not set — TF-IDF fallback will be used for embeddings; scanned PDFs will not OCR.")
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
     title="AI Resume Screener API",
-    description="Real ML pipeline using HuggingFace Inference API for sentence embeddings.",
-    version="2.1.0",
+    description="3-layer ML pipeline: Gemini Vision OCR + regex skill extraction + Gemini batch embeddings.",
+    version="3.0.0",
 )
 
 app.add_middleware(
@@ -110,6 +129,8 @@ SKILL_ENTRIES: List[tuple] = [
     ("serverless", []),
     ("terraform", []),
     ("linux", ["ubuntu"]),
+    ("gemini", ["google gemini"]),
+    ("vertex ai", ["vertexai"]),
 ]
 
 SKILL_LOOKUP: Dict[str, str] = {}
@@ -119,45 +140,27 @@ for canonical, aliases in SKILL_ENTRIES:
         SKILL_LOOKUP[alias.lower()] = canonical
 
 SKILL_IDF: Dict[str, float] = {
-    "rag": 3.5,
-    "mcp": 3.4,
-    "crewai": 3.3,
-    "faiss": 3.2,
-    "spacy": 3.1,
-    "sentence-transformers": 3.4,
-    "mlops": 3.0,
-    "neo4j": 3.0,
-    "qdrant": 3.1,
-    "vector database": 3.0,
-    "llm": 2.8,
-    "embeddings": 2.7,
-    "langchain": 2.6,
-    "natural language processing": 2.6,
-    "transformers": 2.5,
-    "pytorch": 2.4,
-    "tensorflow": 2.3,
-    "kubernetes": 2.2,
-    "docker": 2.0,
-    "aws": 1.9,
-    "machine learning": 2.1,
-    "deep learning": 2.2,
-    "python": 1.5,
-    "git": 1.2,
+    "rag": 3.5, "mcp": 3.4, "crewai": 3.3, "faiss": 3.2, "spacy": 3.1,
+    "sentence-transformers": 3.4, "mlops": 3.0, "neo4j": 3.0, "qdrant": 3.1,
+    "vector database": 3.0, "llm": 2.8, "embeddings": 2.7, "langchain": 2.6,
+    "natural language processing": 2.6, "transformers": 2.5, "pytorch": 2.4,
+    "tensorflow": 2.3, "kubernetes": 2.2, "docker": 2.0, "aws": 1.9,
+    "machine learning": 2.1, "deep learning": 2.2, "python": 1.5, "git": 1.2,
+    "gemini": 3.0, "vertex ai": 2.8,
 }
 
-# ─── Text extraction ──────────────────────────────────────────────────────────
+# ─── Layer 1: Text Extraction ─────────────────────────────────────────────────
 
 
 def extract_text_from_pdf_bytes(data: bytes) -> str:
-    """Extract text from PDF bytes without PyMuPDF (fits in 512MB)."""
+    """Extract text from a digital (text-layer) PDF using PyMuPDF."""
     try:
         import fitz
-
         doc = fitz.open(stream=data, filetype="pdf")
         return "\n".join(page.get_text() for page in doc)
     except Exception:
         pass
-    # Fallback: extract printable ASCII
+    # ASCII byte fallback
     parts, cur = [], ""
     for b in data:
         if 32 <= b <= 126 or b in (9, 10, 13):
@@ -171,19 +174,88 @@ def extract_text_from_pdf_bytes(data: bytes) -> str:
     return " ".join(parts).replace("(", " ").replace(")", " ")
 
 
-def extract_text(file_path: str, filename: str) -> str:
+def extract_text_from_docx_bytes(data: bytes) -> str:
+    """Extract text from DOCX bytes using python-docx (no temp file needed)."""
+    try:
+        import io
+        from docx import Document
+        doc = Document(io.BytesIO(data))
+        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if cell.text.strip():
+                        paragraphs.append(cell.text.strip())
+        return "\n".join(paragraphs)
+    except Exception as e:
+        logger.warning(f"python-docx failed: {e}, using raw decode")
+        return data.decode("utf-8", errors="ignore")
+
+
+def _gemini_vision_ocr_sync(file_path: str, filename: str) -> str:
+    """
+    Synchronous Gemini Vision OCR using the new google-genai SDK.
+    Reads the PDF as a visual document — handles scanned/image-based PDFs.
+    """
+    from google import genai as _genai
+    from google.genai import types as _types
+    client = _genai.Client(api_key=GOOGLE_API_KEY)
+    try:
+        with open(file_path, "rb") as f:
+            pdf_bytes = f.read()
+        response = client.models.generate_content(
+            model=GEMINI_VISION_MODEL,
+            contents=[
+                _types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"),
+                (
+                    "This is a resume/CV document. Extract ALL text content exactly as written. "
+                    "Include: name, contact information, work experience (dates, companies, roles, descriptions), "
+                    "education, skills, certifications, and any other sections. "
+                    "Return only the raw extracted text — do not summarize or interpret."
+                ),
+            ],
+        )
+        return response.text or ""
+    except Exception as e:
+        logger.error(f"Gemini Vision OCR error for {filename}: {e}")
+        return ""
+
+
+async def extract_text(file_path: str, filename: str) -> str:
+    """
+    Smart text extraction cascade:
+    1. PDF → PyMuPDF (digital text layer, instant, free)
+    2. PDF with < 100 chars extracted → Gemini Vision OCR (scanned document)
+    3. DOCX → python-docx via BytesIO
+    """
     with open(file_path, "rb") as f:
         data = f.read()
+
     if filename.lower().endswith(".pdf"):
-        return extract_text_from_pdf_bytes(data)
+        text = extract_text_from_pdf_bytes(data)
+        if len(text.strip()) < 100 and _gemini_ready:
+            logger.info(f"Scanned PDF detected: {filename} — invoking Gemini Vision OCR")
+            vision_text = await asyncio.to_thread(_gemini_vision_ocr_sync, file_path, filename)
+            if vision_text and len(vision_text.strip()) > len(text.strip()):
+                logger.info(f"Gemini Vision OCR succeeded for {filename} ({len(vision_text)} chars)")
+                return vision_text
+        return text
+
+    if filename.lower().endswith(".docx"):
+        return extract_text_from_docx_bytes(data)
+
     return data.decode("utf-8", errors="ignore")
 
 
-# ─── Skill extraction ─────────────────────────────────────────────────────────
+# ─── Layer 2: Skill Extraction ────────────────────────────────────────────────
 
 
 def extract_skills(text: str) -> List[str]:
-    norm = text.lower().replace("(", " ").replace(")", " ").replace(",", " ").replace(";", " ").replace("-", " ")
+    norm = (
+        text.lower()
+        .replace("(", " ").replace(")", " ")
+        .replace(",", " ").replace(";", " ").replace("-", " ")
+    )
     found = set()
     for variant, canonical in sorted(SKILL_LOOKUP.items(), key=lambda x: -len(x[0])):
         if len(variant) <= 4:
@@ -195,42 +267,90 @@ def extract_skills(text: str) -> List[str]:
     return list(found)
 
 
-# ─── Embeddings via HuggingFace Inference API ─────────────────────────────────
+# ─── Layer 3: Gemini Batch Embeddings ─────────────────────────────────────────
 
 
-async def get_embedding_hf(text: str) -> Optional[List[float]]:
-    """Get embedding from HuggingFace Inference API."""
-    headers = {"Content-Type": "application/json"}
-    if HF_API_TOKEN:
-        headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
+def _gemini_embed_sync(texts: List[str], task_type: str) -> List[List[float]]:
+    """Embed a batch of texts in ONE Gemini API call using the new google-genai SDK."""
+    from google import genai as _genai
+    from google.genai import types as _types
+    client = _genai.Client(api_key=GOOGLE_API_KEY)
+    response = client.models.embed_content(
+        model=GEMINI_EMBED_MODEL,
+        contents=texts,
+        config=_types.EmbedContentConfig(
+            task_type=task_type,
+            output_dimensionality=EMBEDDING_DIM,
+        ),
+    )
+    return [e.values for e in response.embeddings]
 
-    payload = {"inputs": text[:2000], "options": {"wait_for_model": True}}
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        for attempt in range(3):
-            try:
-                r = await client.post(HF_API_URL, json=payload, headers=headers)
-                if r.status_code == 200:
-                    data = r.json()
-                    # HF returns nested list for feature-extraction
-                    if isinstance(data, list):
-                        if isinstance(data[0], list):
-                            # Mean pool token embeddings
-                            arr = np.array(data[0])
-                            return (arr.mean(axis=0)).tolist()
-                        return data
-                elif r.status_code == 503:
-                    # Model loading, wait
-                    logger.info(f"HF model loading, attempt {attempt + 1}")
-                    await asyncio.sleep(5)
-                else:
-                    logger.error(f"HF API error {r.status_code}: {r.text[:200]}")
-                    break
-            except Exception as e:
-                logger.error(f"HF API request failed: {e}")
-                if attempt < 2:
-                    await asyncio.sleep(2)
-    return None
+async def get_embeddings_batch(
+    texts: List[str], task_type: str = "retrieval_document"
+) -> List[Optional[List[float]]]:
+    """
+    Async wrapper for Gemini batch embedding.
+    Retries with exponential backoff on rate limit (429) or transient errors.
+    Returns None entries where embedding failed.
+    """
+    if not _gemini_ready or not texts:
+        return [None] * len(texts)
+
+    truncated = [t[:8000] for t in texts]
+
+    for attempt in range(3):
+        try:
+            embeddings = await asyncio.to_thread(_gemini_embed_sync, truncated, task_type)
+            if len(embeddings) == len(texts):
+                return embeddings
+            # Pad if partial result returned
+            return embeddings + [None] * (len(texts) - len(embeddings))
+        except Exception as e:
+            err = str(e)
+            if any(k in err for k in ("429", "RESOURCE_EXHAUSTED", "quota")):
+                wait = 2 ** attempt * 2
+                logger.warning(f"Gemini rate limit — backing off {wait}s (attempt {attempt + 1}/3)")
+                await asyncio.sleep(wait)
+            elif any(k in err for k in ("503", "unavailable")):
+                wait = 2 ** attempt
+                logger.warning(f"Gemini unavailable — retrying in {wait}s")
+                await asyncio.sleep(wait)
+            else:
+                logger.error(f"Gemini embedding error (attempt {attempt + 1}): {e}")
+                break
+
+    logger.error("All Gemini embedding attempts failed — returning None vectors")
+    return [None] * len(texts)
+
+
+# ─── TF-IDF Fallback (when GOOGLE_API_KEY not set) ────────────────────────────
+
+
+def tfidf_cosine(a: str, b: str) -> float:
+    def tok(t: str) -> List[str]:
+        return [w for w in re.findall(r"\b[a-z]{3,}\b", t.lower()) if len(w) > 2]
+    ta, tb = tok(a), tok(b)
+    if not ta or not tb:
+        return 0.15
+    def tf(tokens: List[str]) -> Dict[str, float]:
+        c: Dict[str, int] = {}
+        for t in tokens:
+            c[t] = c.get(t, 0) + 1
+        n = len(tokens)
+        return {k: v / n for k, v in c.items()}
+    fa, fb = tf(ta), tf(tb)
+    vocab = set(fa) | set(fb)
+    dot = nA = nB = 0.0
+    for w in vocab:
+        x, y = fa.get(w, 0.0), fb.get(w, 0.0)
+        dot += x * y; nA += x * x; nB += y * y
+    if not nA or not nB:
+        return 0.15
+    return float(min(1.0, (dot / (nA ** 0.5 * nB ** 0.5)) * 5.5))
+
+
+# ─── Layer 4: Scoring & Ranking ───────────────────────────────────────────────
 
 
 def cosine_similarity(a: List[float], b: List[float]) -> float:
@@ -250,26 +370,60 @@ def idf_skill_score(resume_skills: List[str], jd_skills: List[str]) -> float:
     return min(1.0, matched / max(total, 1))
 
 
+def extract_years_experience(content: str) -> int:
+    """Extract approximate years of experience. Only count years in valid range."""
+    current_year = 2026
+    year_matches = re.findall(r"\b((?:19[7-9]\d|20[0-2]\d))\b", content)
+    if len(year_matches) < 2:
+        return 0
+    years = [int(y) for y in year_matches if 1970 <= int(y) <= current_year]
+    if len(years) < 2:
+        return 0
+    return min(max(years) - min(years), 25)
+
+
 def build_explanation(
-    name: str, rank: int, hybrid: float, sem: float, sk: float, matched: List[str], missing: List[str], title: str, yrs: int
+    name: str, rank: int, hybrid: float, sem: float, sk: float,
+    matched: List[str], missing: List[str], title: str, yrs: int,
+    using_gemini: bool = True,
 ) -> str:
     pct = round(hybrid * 100, 1)
-    fit = "excellent" if hybrid >= 0.8 else "good" if hybrid >= 0.6 else "moderate" if hybrid >= 0.4 else "limited"
-    p = [f"{name} shows {fit} fit for the {title} position with an overall score of {pct}% (Rank #{rank})."]
-    if sem >= 0.65:
-        p.append(f"Strong semantic alignment ({sem:.0%}) — resume content closely matches the job description.")
-    elif sem >= 0.4:
-        p.append(f"Moderate semantic match ({sem:.0%}) shows relevant background.")
+    fit = ("excellent" if hybrid >= 0.8 else "good" if hybrid >= 0.6
+           else "moderate" if hybrid >= 0.4 else "limited")
+
+    parts = []
+
+    # Hidden Gem: high semantic alignment but low keyword coverage
+    if using_gemini and (sem - sk) > 0.3 and sem >= 0.55:
+        parts.append(
+            f"Hidden Gem: {name} may be expressing the same capabilities in different words — "
+            f"semantic alignment ({sem:.0%}) is significantly higher than keyword match ({sk:.0%})."
+        )
+
+    parts.append(
+        f"{name} shows {fit} fit for the {title} position "
+        f"with an overall score of {pct}% (Rank #{rank})."
+    )
+
+    if using_gemini:
+        if sem >= 0.65:
+            parts.append(f"Strong semantic alignment ({sem:.0%}) — resume content closely matches the job description.")
+        elif sem >= 0.4:
+            parts.append(f"Moderate semantic match ({sem:.0%}) shows relevant background.")
+    else:
+        parts.append("Scored using keyword-based TF-IDF (Gemini API unavailable).")
+
     if matched:
-        p.append(f"Matched skills: {', '.join(matched[:6])}.")
+        parts.append(f"Matched skills: {', '.join(matched[:6])}.")
     if missing:
-        p.append(f"Missing: {', '.join(missing[:4])}.")
+        parts.append(f"Missing: {', '.join(missing[:4])}.")
     if yrs > 0:
-        p.append(f"~{yrs} years of experience detected.")
-    return " ".join(p)
+        parts.append(f"~{yrs} years of experience detected.")
+
+    return " ".join(parts)
 
 
-# ─── Response models ──────────────────────────────────────────────────────────
+# ─── Response Models ──────────────────────────────────────────────────────────
 
 
 class CandidateResult(BaseModel):
@@ -304,20 +458,27 @@ class ScreeningResult(BaseModel):
 async def health():
     return {
         "status": "healthy",
-        "model": HF_MODEL,
-        "embedding_source": "HuggingFace Inference API",
-        "hf_token_set": bool(HF_API_TOKEN),
-        "version": "2.1.0",
+        "embedding_model": GEMINI_EMBED_MODEL,
+        "vision_model": GEMINI_VISION_MODEL,
+        "embedding_source": "Google Gemini API" if _gemini_ready else "TF-IDF fallback (no GOOGLE_API_KEY)",
+        "ocr_available": _gemini_ready,
+        "gemini_ready": _gemini_ready,
+        "embedding_dimensions": EMBEDDING_DIM,
+        "version": "3.0.0",
     }
 
 
 @app.get("/")
 async def root():
     return {
-        "message": "AI Resume Screener API",
+        "message": "AI Resume Screener API v3.0",
         "docs": "/docs",
-        "model": HF_MODEL,
-        "pipeline": "HuggingFace API embeddings → cosine similarity → IDF skill scoring",
+        "pipeline": (
+            "Layer 1: PyMuPDF (digital PDF) → Gemini Vision OCR (scanned PDF) → python-docx (DOCX) | "
+            "Layer 2: Regex skill taxonomy (60+ skills, IDF weights) | "
+            "Layer 3: Gemini batch embeddings (retrieval_query/document, 768-dim) | "
+            "Layer 4: NumPy cosine similarity + hybrid scoring + Hidden Gem detection"
+        ),
     }
 
 
@@ -328,7 +489,7 @@ async def screen_resumes(
     job_description: str = Form(...),
     semantic_weight: float = Form(default=0.7),
     include_fairness: bool = Form(default=True),
-    embedding_model: str = Form(default="all-MiniLM-L6-v2"),
+    embedding_model: str = Form(default="gemini-embedding-001"),
 ):
     if not files:
         raise HTTPException(status_code=400, detail="At least one resume file required")
@@ -338,12 +499,13 @@ async def screen_resumes(
     t0 = time.time()
     job_id = str(uuid.uuid4())
 
-    # Save files
+    # Save uploaded files to temp dir
     temp_dir = tempfile.mkdtemp()
-    file_paths = []
+    file_paths: List[tuple] = []
     for upload in files:
         fname = upload.filename or "resume.pdf"
         if not fname.lower().endswith((".pdf", ".docx")):
+            logger.info(f"Skipping unsupported file: {fname}")
             continue
         dest = os.path.join(temp_dir, fname)
         content = await upload.read()
@@ -352,83 +514,86 @@ async def screen_resumes(
         file_paths.append((dest, fname))
 
     if not file_paths:
-        raise HTTPException(status_code=400, detail="No valid PDF/DOCX files")
+        raise HTTPException(status_code=400, detail="No valid PDF or DOCX files provided")
 
     try:
-        jd_skills = extract_skills(job_description)
-        jd_text = f"{job_title} {job_description}"
+        # ── Layer 1: Extract text from all files ──────────────────────────────
+        logger.info(f"Extracting text from {len(file_paths)} file(s)...")
+        resume_texts: List[str] = []
+        resume_names: List[str] = []
 
-        # Get JD embedding
-        logger.info("Getting JD embedding from HuggingFace API...")
-        jd_embedding = await get_embedding_hf(jd_text)
-
-        candidates = []
         for file_path, filename in file_paths:
-            # Extract text
-            content = extract_text(file_path, filename)
-
-            # Name from filename
+            text = await extract_text(file_path, filename)
+            resume_texts.append(text)
             stem = re.sub(r"\.(pdf|docx)$", "", filename, flags=re.IGNORECASE)
             stem = re.sub(r"[_\-]", " ", stem)
             name = " ".join(p.capitalize() for p in stem.split()[:3]) or "Candidate"
+            resume_names.append(name)
 
-            # Skills
+        jd_text = f"{job_title} {job_description}"
+
+        # ── Layer 2: Skill extraction ─────────────────────────────────────────
+        jd_skills = extract_skills(job_description)
+
+        # ── Layer 3: Gemini batch embeddings ──────────────────────────────────
+        # JD → retrieval_query (what we search FOR)
+        # Resumes → retrieval_document (what we search IN)
+        # Total: 2 API calls regardless of number of resumes
+        logger.info("Requesting Gemini embeddings (batch)...")
+        jd_emb_list = await get_embeddings_batch([jd_text], task_type="retrieval_query")
+        jd_embedding = jd_emb_list[0] if jd_emb_list else None
+
+        resume_embeddings = await get_embeddings_batch(resume_texts, task_type="retrieval_document")
+
+        # ── Layer 4: Score each candidate ─────────────────────────────────────
+        candidates = []
+        for i, (file_path, filename) in enumerate(file_paths):
+            content = resume_texts[i]
+            name = resume_names[i]
+
             resume_skills = extract_skills(content)
             matched = [s for s in resume_skills if s in jd_skills]
             missing = [s for s in jd_skills if s not in resume_skills]
 
-            # Semantic score
-            sem = 0.5  # default if API fails
-            if jd_embedding and content.strip():
-                resume_embedding = await get_embedding_hf(content[:3000])
-                if resume_embedding:
-                    sem = cosine_similarity(jd_embedding, resume_embedding)
+            resume_emb = resume_embeddings[i] if i < len(resume_embeddings) else None
+            if jd_embedding and resume_emb and content.strip():
+                sem = cosine_similarity(jd_embedding, resume_emb)
+                using_gemini = True
+            else:
+                sem = tfidf_cosine(content, jd_text) if content.strip() else 0.15
+                using_gemini = False
+                logger.warning(f"TF-IDF fallback used for: {name}")
 
-            # Skill score
             sk = idf_skill_score(resume_skills, jd_skills)
-
-            # Hybrid
             hybrid = min(1.0, max(0.0, semantic_weight * sem + (1 - semantic_weight) * sk))
+            yrs = extract_years_experience(content)
 
-            # Years
-            year_matches = re.findall(r"\b(20\d{2})\b", content)
-            yrs = 0
-            if len(year_matches) >= 2:
-                years = [int(y) for y in year_matches]
-                yrs = min(max(years) - min(years), 20)
+            candidates.append({
+                "rank": 0,
+                "name": name,
+                "email": f"{name.lower().replace(' ', '.')}@example.com",
+                "hybrid_score": round(hybrid, 4),
+                "semantic_score": round(sem, 4),
+                "skill_score": round(sk, 4),
+                "matched_skills": matched[:10],
+                "missing_skills": missing[:10],
+                "years_experience": yrs,
+                "explanation": "",
+                "_using_gemini": using_gemini,
+            })
 
-            candidates.append(
-                {
-                    "rank": 0,
-                    "name": name,
-                    "email": f"{name.lower().replace(' ', '.')}@example.com",
-                    "hybrid_score": round(hybrid, 4),
-                    "semantic_score": round(sem, 4),
-                    "skill_score": round(sk, 4),
-                    "matched_skills": matched[:10],
-                    "missing_skills": missing[:10],
-                    "years_experience": yrs,
-                    "explanation": "",
-                }
-            )
-
-        # Sort and rank
+        # Sort, rank, build explanations
         candidates.sort(key=lambda c: c["hybrid_score"], reverse=True)
         for i, c in enumerate(candidates):
             c["rank"] = i + 1
             c["explanation"] = build_explanation(
-                c["name"],
-                c["rank"],
-                c["hybrid_score"],
-                c["semantic_score"],
-                c["skill_score"],
-                c["matched_skills"],
-                c["missing_skills"],
-                job_title,
-                c["years_experience"],
+                c["name"], c["rank"], c["hybrid_score"],
+                c["semantic_score"], c["skill_score"],
+                c["matched_skills"], c["missing_skills"],
+                job_title, c["years_experience"],
+                using_gemini=c.pop("_using_gemini", True),
             )
 
-        # Fairness
         fairness_summary = None
         if include_fairness:
             fairness_summary = {
@@ -440,6 +605,12 @@ async def screen_resumes(
                 ],
             }
 
+        model_label = (
+            f"Google Gemini: {GEMINI_EMBED_MODEL} ({EMBEDDING_DIM}-dim)"
+            if _gemini_ready
+            else "TF-IDF fallback (set GOOGLE_API_KEY for Gemini ML)"
+        )
+
         return ScreeningResult(
             job_id=job_id,
             job_title=job_title,
@@ -449,7 +620,7 @@ async def screen_resumes(
             candidates=[CandidateResult(**c) for c in candidates],
             fairness_summary=fairness_summary,
             created_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            model_used=f"HuggingFace API: {HF_MODEL}",
+            model_used=model_label,
         )
 
     finally:
@@ -469,11 +640,17 @@ async def list_models():
     return {
         "models": [
             {
-                "name": "all-MiniLM-L6-v2",
-                "dimensions": 384,
-                "source": "HuggingFace Inference API",
-                "description": "Real sentence-transformers embeddings via HF API. No local model loading.",
+                "name": "gemini-embedding-001",
+                "vision_ocr": GEMINI_VISION_MODEL,
+                "dimensions": EMBEDDING_DIM,
+                "source": "Google Gemini API",
+                "task_types": ["retrieval_query (JD)", "retrieval_document (resumes)"],
+                "description": (
+                    "Batch embeddings — all resumes in one API call. "
+                    "Gemini Vision OCR auto-activates for scanned PDFs."
+                ),
                 "is_default": True,
+                "ready": _gemini_ready,
             }
         ]
     }

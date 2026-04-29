@@ -83,17 +83,6 @@ export default function ResultsView({ onBack }: ResultsViewProps) {
             <p className="text-black font-bold tracking-widest uppercase text-sm bg-gray-100 inline-block px-3 py-1 border-2 border-black">
               {results.job_title} · {results.successfully_parsed} RESUMES PROCESSED
             </p>
-            {results.model_used && (
-              <div className="mt-2">
-                <span className={`text-xs font-black px-2 py-1 border-2 inline-block ${
-                  results.model_used.toLowerCase().includes('gemini')
-                    ? 'border-black bg-black text-white'
-                    : 'border-gray-400 bg-gray-100 text-gray-600'
-                }`}>
-                  {results.model_used.toLowerCase().includes('gemini') ? '🤖 GEMINI ML' : '⚡ TF-IDF FALLBACK'}
-                </span>
-              </div>
-            )}
           </div>
           <button onClick={onBack} className="brutalist-button px-6 py-3 text-sm md:w-auto w-full">
             <ArrowLeft className="w-5 h-5 mr-2" /> NEW SCREENING

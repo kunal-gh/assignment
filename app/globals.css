@@ -48,10 +48,6 @@
     @apply border-black;
     box-shadow: 3px 3px 0px 0px rgba(0, 0, 0, 1);
   }
-
-  .brutalist-label {
-    @apply block text-sm font-black tracking-widest uppercase mb-2 text-black;
-  }
 }
 
 /* Scrollbar */

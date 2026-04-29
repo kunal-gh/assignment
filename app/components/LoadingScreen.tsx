@@ -31,7 +31,7 @@ export default function LoadingScreen() {
                   First request may take 30–60s
                 </p>
                 <p className="text-xs font-medium text-gray-600 leading-relaxed">
-                  The AI backend (Gemini embeddings + Vision OCR) runs on Render free tier
+                  The AI backend (sentence-transformers + FAISS) runs on Render free tier
                   and spins down after 15 min of inactivity. It&apos;s waking up now —
                   subsequent requests will be fast.
                 </p>
@@ -67,13 +67,11 @@ export default function LoadingScreen() {
         {/* Pipeline steps */}
         <div className="space-y-1 mb-6">
           {[
-            { label: 'PDF text extraction (PyMuPDF)', done: progress >= 22 },
-            { label: 'Gemini Vision OCR (if scanned PDF)', done: progress >= 35 },
-            { label: 'DOCX extraction (python-docx)', done: progress >= 35 },
-            { label: 'Regex skill extraction (60+ skills)', done: progress >= 48 },
-            { label: 'Gemini batch embeddings (768-dim)', done: progress >= 65 },
-            { label: 'NumPy cosine similarity', done: progress >= 75 },
-            { label: 'Hybrid scoring + Hidden Gem detection', done: progress >= 85 },
+            { label: 'PDF text extraction (PyMuPDF)', done: progress >= 25 },
+            { label: 'spaCy NER + skill extraction', done: progress >= 40 },
+            { label: 'sentence-transformers embeddings', done: progress >= 55 },
+            { label: 'FAISS cosine similarity', done: progress >= 70 },
+            { label: 'Hybrid scoring + explanations', done: progress >= 82 },
             { label: 'Fairness analysis', done: progress >= 90 },
           ].map(({ label, done }) => (
             <div key={label} className="flex items-center gap-2">

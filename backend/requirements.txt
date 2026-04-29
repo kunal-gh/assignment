@@ -2,14 +2,14 @@
 fastapi>=0.104.0
 uvicorn>=0.24.0
 python-multipart>=0.0.6
+python-dotenv>=1.0.0  # local dev only — reads backend/.env (no-op on Render)
 
 # ─── Document Parsing ─────────────────────────────────────────────────────────
 PyMuPDF>=1.23.0
 python-docx>=0.8.11
 
-# ─── Embeddings (via HuggingFace Inference API — no local model loading) ──────
-httpx>=0.25.0
-numpy>=1.24.0
+# ─── Google Gemini — NEW SDK (google-generativeai is deprecated as of 2025) ───
+google-genai>=1.0.0
 
-# ─── Utils ────────────────────────────────────────────────────────────────────
-python-dotenv>=1.0.0
+# ─── Math ─────────────────────────────────────────────────────────────────────
+numpy>=1.24.0

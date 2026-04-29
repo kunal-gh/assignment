@@ -1,17 +1,16 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileUp, X, FileText, AlertCircle } from 'lucide-react';
+import { FileUp, X, FileText } from 'lucide-react';
 import { useScreeningStore } from '@/store/screeningStore';
 
 export default function FileUpload() {
   const { files, addFiles, removeFile } = useScreeningStore();
-  const [sizeError, setSizeError] = useState<string | null>(null);
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => { setSizeError(null); addFiles(acceptedFiles); },
+    (acceptedFiles: File[]) => { addFiles(acceptedFiles); },
     [addFiles]
   );
 
@@ -21,17 +20,7 @@ export default function FileUpload() {
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
     },
-    maxSize: 10 * 1024 * 1024, // 10MB — enforced here AND on Vercel body limit
     multiple: true,
-    onDropRejected: (rejections) => {
-      const names = rejections.map(r => r.file.name).join(', ');
-      const hasSize = rejections.some(r => r.errors.some(e => e.code === 'file-too-large'));
-      setSizeError(
-        hasSize
-          ? `File too large (max 10MB): ${names}`
-          : `Unsupported file type: ${names}`
-      );
-    },
   });
 
   const formatSize = (bytes: number) => {
@@ -73,18 +62,6 @@ export default function FileUpload() {
           </p>
         </motion.div>
       </div>
-
-      {/* Size/type error */}
-      {sizeError && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-3 flex items-center gap-2 p-3 border-4 border-black bg-yellow-50"
-        >
-          <AlertCircle className="w-4 h-4 flex-shrink-0 text-black" />
-          <p className="text-sm font-bold text-black">{sizeError}</p>
-        </motion.div>
-      )}
 
       {/* File list */}
       {files.length > 0 && (

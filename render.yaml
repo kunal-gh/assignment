@@ -6,9 +6,7 @@ services:
     dockerContext: .
     plan: free
     envVars:
-      - key: EMBEDDING_MODEL
-        value: all-MiniLM-L6-v2
-      - key: OPENAI_API_KEY
-        sync: false  # set in Render dashboard for LLM explanations
+      - key: GOOGLE_API_KEY
+        sync: false  # set in Render dashboard — https://aistudio.google.com/apikey
     healthCheckPath: /health
     autoDeploy: true

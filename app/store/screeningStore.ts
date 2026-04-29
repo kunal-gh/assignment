@@ -42,16 +42,20 @@ interface ScreeningState {
 
   semanticWeight: number;
   setSemanticWeight: (weight: number) => void;
+  embeddingModel: string;
+  setEmbeddingModel: (model: string) => void;
   includeFairness: boolean;
   setIncludeFairness: (include: boolean) => void;
 
   isProcessing: boolean;
   progress: number;
   statusMessage: string;
+  setProgress: (progress: number) => void;
   error: string | null;
 
   results: ScreeningResults | null;
   setResults: (results: ScreeningResults) => void;
+  clearResults: () => void;
 
   processResumes: () => Promise<void>;
 }
@@ -63,13 +67,12 @@ function getApiUrl(): string {
 
 const STATUS_STAGES = [
   { at: 0,  msg: 'Waking up AI backend...' },
-  { at: 10, msg: 'Extracting text (PyMuPDF / python-docx)...' },
-  { at: 22, msg: 'Scanned PDF? Invoking Gemini Vision OCR...' },
-  { at: 35, msg: 'Running regex skill extraction (60+ skills)...' },
-  { at: 48, msg: 'Generating Gemini embeddings (batch, 768-dim)...' },
-  { at: 65, msg: 'Computing NumPy cosine similarity...' },
-  { at: 75, msg: 'Computing hybrid scores + Hidden Gem detection...' },
-  { at: 85, msg: 'Building AI explanations...' },
+  { at: 10, msg: 'Extracting text from resumes...' },
+  { at: 25, msg: 'Running spaCy NER skill extraction...' },
+  { at: 40, msg: 'Generating sentence embeddings (all-MiniLM-L6-v2)...' },
+  { at: 55, msg: 'Running FAISS cosine similarity search...' },
+  { at: 70, msg: 'Computing hybrid scores...' },
+  { at: 82, msg: 'Generating AI explanations...' },
   { at: 90, msg: 'Analyzing fairness metrics...' },
 ];
 
@@ -78,6 +81,7 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
   jobDescription: '',
   files: [],
   semanticWeight: 0.7,
+  embeddingModel: 'all-MiniLM-L6-v2',
   includeFairness: true,
   isProcessing: false,
   progress: 0,
@@ -91,8 +95,11 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
   removeFile: (i) => set((s) => ({ files: s.files.filter((_, idx) => idx !== i) })),
   clearFiles: () => set({ files: [] }),
   setSemanticWeight: (w) => set({ semanticWeight: w }),
+  setEmbeddingModel: (m) => set({ embeddingModel: m }),
   setIncludeFairness: (v) => set({ includeFairness: v }),
+  setProgress: (p) => set({ progress: p }),
   setResults: (r) => set({ results: r, isProcessing: false, error: null }),
+  clearResults: () => set({ results: null, error: null }),
 
   processResumes: async () => {
     const state = get();
@@ -120,6 +127,7 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
       formData.append('job_description', state.jobDescription);
       formData.append('semantic_weight', state.semanticWeight.toString());
       formData.append('include_fairness', state.includeFairness.toString());
+      formData.append('embedding_model', state.embeddingModel);
       state.files.forEach((f) => formData.append('files', f));
 
       // 3-minute timeout for cold start + ML inference

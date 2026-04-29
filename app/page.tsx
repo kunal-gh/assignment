@@ -18,7 +18,9 @@ export default function Home() {
 
   const handleProcess = async () => {
     await processResumes();
-    setStep('results');
+    // Only navigate to results view if processing succeeded
+    const { results } = useScreeningStore.getState();
+    if (results) setStep('results');
   };
 
   return (
@@ -79,7 +81,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="mt-16 text-center border-t-4 border-black pt-6">
         <p className="text-sm font-bold tracking-widest uppercase text-gray-400">
-          sentence-transformers · FAISS · spaCy · FastAPI · Next.js · Docker
+          Gemini Embeddings · Gemini Vision OCR · NumPy · FastAPI · Next.js · Docker
         </p>
       </footer>
     </main>
