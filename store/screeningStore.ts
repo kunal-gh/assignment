@@ -57,9 +57,9 @@ interface ScreeningState {
 }
 
 // Call the real ML backend directly to bypass Vercel's 60-second serverless timeout limit.
-// The backend has CORS allow_origins=["*"] so this is perfectly safe and robust.
 function getApiUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL || 'https://ai-resume-screener-api-5iq6.onrender.com/screen';
+  const base = process.env.NEXT_PUBLIC_API_URL || 'https://ai-resume-screener-api-5iq6.onrender.com';
+  return base.endsWith('/screen') ? base : `${base.replace(/\/$/, '')}/screen`;
 }
 
 const STATUS_STAGES = [
