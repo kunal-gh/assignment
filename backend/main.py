@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 # Load .env for local development (no-op on Render where env vars are set in dashboard)
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
 except ImportError:
     pass  # python-dotenv not installed — env vars must be set in the environment directly
@@ -42,6 +43,7 @@ _gemini_client = None
 if GOOGLE_API_KEY:
     try:
         from google import genai as _genai_module
+
         _gemini_client = _genai_module.Client(api_key=GOOGLE_API_KEY)
         _gemini_ready = True
         logger.info("Google Gemini client configured (new google-genai SDK).")
@@ -140,13 +142,32 @@ for canonical, aliases in SKILL_ENTRIES:
         SKILL_LOOKUP[alias.lower()] = canonical
 
 SKILL_IDF: Dict[str, float] = {
-    "rag": 3.5, "mcp": 3.4, "crewai": 3.3, "faiss": 3.2, "spacy": 3.1,
-    "sentence-transformers": 3.4, "mlops": 3.0, "neo4j": 3.0, "qdrant": 3.1,
-    "vector database": 3.0, "llm": 2.8, "embeddings": 2.7, "langchain": 2.6,
-    "natural language processing": 2.6, "transformers": 2.5, "pytorch": 2.4,
-    "tensorflow": 2.3, "kubernetes": 2.2, "docker": 2.0, "aws": 1.9,
-    "machine learning": 2.1, "deep learning": 2.2, "python": 1.5, "git": 1.2,
-    "gemini": 3.0, "vertex ai": 2.8,
+    "rag": 3.5,
+    "mcp": 3.4,
+    "crewai": 3.3,
+    "faiss": 3.2,
+    "spacy": 3.1,
+    "sentence-transformers": 3.4,
+    "mlops": 3.0,
+    "neo4j": 3.0,
+    "qdrant": 3.1,
+    "vector database": 3.0,
+    "llm": 2.8,
+    "embeddings": 2.7,
+    "langchain": 2.6,
+    "natural language processing": 2.6,
+    "transformers": 2.5,
+    "pytorch": 2.4,
+    "tensorflow": 2.3,
+    "kubernetes": 2.2,
+    "docker": 2.0,
+    "aws": 1.9,
+    "machine learning": 2.1,
+    "deep learning": 2.2,
+    "python": 1.5,
+    "git": 1.2,
+    "gemini": 3.0,
+    "vertex ai": 2.8,
 }
 
 # ─── Layer 1: Text Extraction ─────────────────────────────────────────────────
@@ -156,6 +177,7 @@ def extract_text_from_pdf_bytes(data: bytes) -> str:
     """Extract text from a digital (text-layer) PDF using PyMuPDF."""
     try:
         import fitz
+
         doc = fitz.open(stream=data, filetype="pdf")
         return "\n".join(page.get_text() for page in doc)
     except Exception:
@@ -179,6 +201,7 @@ def extract_text_from_docx_bytes(data: bytes) -> str:
     try:
         import io
         from docx import Document
+
         doc = Document(io.BytesIO(data))
         paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
         for table in doc.tables:
@@ -199,6 +222,7 @@ def _gemini_vision_ocr_sync(file_path: str, filename: str) -> str:
     """
     from google import genai as _genai
     from google.genai import types as _types
+
     client = _genai.Client(api_key=GOOGLE_API_KEY)
     try:
         with open(file_path, "rb") as f:
@@ -251,11 +275,7 @@ async def extract_text(file_path: str, filename: str) -> str:
 
 
 def extract_skills(text: str) -> List[str]:
-    norm = (
-        text.lower()
-        .replace("(", " ").replace(")", " ")
-        .replace(",", " ").replace(";", " ").replace("-", " ")
-    )
+    norm = text.lower().replace("(", " ").replace(")", " ").replace(",", " ").replace(";", " ").replace("-", " ")
     found = set()
     for variant, canonical in sorted(SKILL_LOOKUP.items(), key=lambda x: -len(x[0])):
         if len(variant) <= 4:
@@ -274,6 +294,7 @@ def _gemini_embed_sync(texts: List[str], task_type: str) -> List[List[float]]:
     """Embed a batch of texts in ONE Gemini API call using the new google-genai SDK."""
     from google import genai as _genai
     from google.genai import types as _types
+
     client = _genai.Client(api_key=GOOGLE_API_KEY)
     response = client.models.embed_content(
         model=GEMINI_EMBED_MODEL,
@@ -286,9 +307,7 @@ def _gemini_embed_sync(texts: List[str], task_type: str) -> List[List[float]]:
     return [e.values for e in response.embeddings]
 
 
-async def get_embeddings_batch(
-    texts: List[str], task_type: str = "retrieval_document"
-) -> List[Optional[List[float]]]:
+async def get_embeddings_batch(texts: List[str], task_type: str = "retrieval_document") -> List[Optional[List[float]]]:
     """
     Async wrapper for Gemini batch embedding.
     Retries with exponential backoff on rate limit (429) or transient errors.
@@ -309,11 +328,11 @@ async def get_embeddings_batch(
         except Exception as e:
             err = str(e)
             if any(k in err for k in ("429", "RESOURCE_EXHAUSTED", "quota")):
-                wait = 2 ** attempt * 2
+                wait = 2**attempt * 2
                 logger.warning(f"Gemini rate limit — backing off {wait}s (attempt {attempt + 1}/3)")
                 await asyncio.sleep(wait)
             elif any(k in err for k in ("503", "unavailable")):
-                wait = 2 ** attempt
+                wait = 2**attempt
                 logger.warning(f"Gemini unavailable — retrying in {wait}s")
                 await asyncio.sleep(wait)
             else:
@@ -330,24 +349,29 @@ async def get_embeddings_batch(
 def tfidf_cosine(a: str, b: str) -> float:
     def tok(t: str) -> List[str]:
         return [w for w in re.findall(r"\b[a-z]{3,}\b", t.lower()) if len(w) > 2]
+
     ta, tb = tok(a), tok(b)
     if not ta or not tb:
         return 0.15
+
     def tf(tokens: List[str]) -> Dict[str, float]:
         c: Dict[str, int] = {}
         for t in tokens:
             c[t] = c.get(t, 0) + 1
         n = len(tokens)
         return {k: v / n for k, v in c.items()}
+
     fa, fb = tf(ta), tf(tb)
     vocab = set(fa) | set(fb)
     dot = nA = nB = 0.0
     for w in vocab:
         x, y = fa.get(w, 0.0), fb.get(w, 0.0)
-        dot += x * y; nA += x * x; nB += y * y
+        dot += x * y
+        nA += x * x
+        nB += y * y
     if not nA or not nB:
         return 0.15
-    return float(min(1.0, (dot / (nA ** 0.5 * nB ** 0.5)) * 5.5))
+    return float(min(1.0, (dot / (nA**0.5 * nB**0.5)) * 5.5))
 
 
 # ─── Layer 4: Scoring & Ranking ───────────────────────────────────────────────
@@ -383,13 +407,19 @@ def extract_years_experience(content: str) -> int:
 
 
 def build_explanation(
-    name: str, rank: int, hybrid: float, sem: float, sk: float,
-    matched: List[str], missing: List[str], title: str, yrs: int,
+    name: str,
+    rank: int,
+    hybrid: float,
+    sem: float,
+    sk: float,
+    matched: List[str],
+    missing: List[str],
+    title: str,
+    yrs: int,
     using_gemini: bool = True,
 ) -> str:
     pct = round(hybrid * 100, 1)
-    fit = ("excellent" if hybrid >= 0.8 else "good" if hybrid >= 0.6
-           else "moderate" if hybrid >= 0.4 else "limited")
+    fit = "excellent" if hybrid >= 0.8 else "good" if hybrid >= 0.6 else "moderate" if hybrid >= 0.4 else "limited"
 
     parts = []
 
@@ -400,10 +430,7 @@ def build_explanation(
             f"semantic alignment ({sem:.0%}) is significantly higher than keyword match ({sk:.0%})."
         )
 
-    parts.append(
-        f"{name} shows {fit} fit for the {title} position "
-        f"with an overall score of {pct}% (Rank #{rank})."
-    )
+    parts.append(f"{name} shows {fit} fit for the {title} position " f"with an overall score of {pct}% (Rank #{rank}).")
 
     if using_gemini:
         if sem >= 0.65:
@@ -568,29 +595,36 @@ async def screen_resumes(
             hybrid = min(1.0, max(0.0, semantic_weight * sem + (1 - semantic_weight) * sk))
             yrs = extract_years_experience(content)
 
-            candidates.append({
-                "rank": 0,
-                "name": name,
-                "email": f"{name.lower().replace(' ', '.')}@example.com",
-                "hybrid_score": round(hybrid, 4),
-                "semantic_score": round(sem, 4),
-                "skill_score": round(sk, 4),
-                "matched_skills": matched[:10],
-                "missing_skills": missing[:10],
-                "years_experience": yrs,
-                "explanation": "",
-                "_using_gemini": using_gemini,
-            })
+            candidates.append(
+                {
+                    "rank": 0,
+                    "name": name,
+                    "email": f"{name.lower().replace(' ', '.')}@example.com",
+                    "hybrid_score": round(hybrid, 4),
+                    "semantic_score": round(sem, 4),
+                    "skill_score": round(sk, 4),
+                    "matched_skills": matched[:10],
+                    "missing_skills": missing[:10],
+                    "years_experience": yrs,
+                    "explanation": "",
+                    "_using_gemini": using_gemini,
+                }
+            )
 
         # Sort, rank, build explanations
         candidates.sort(key=lambda c: c["hybrid_score"], reverse=True)
         for i, c in enumerate(candidates):
             c["rank"] = i + 1
             c["explanation"] = build_explanation(
-                c["name"], c["rank"], c["hybrid_score"],
-                c["semantic_score"], c["skill_score"],
-                c["matched_skills"], c["missing_skills"],
-                job_title, c["years_experience"],
+                c["name"],
+                c["rank"],
+                c["hybrid_score"],
+                c["semantic_score"],
+                c["skill_score"],
+                c["matched_skills"],
+                c["missing_skills"],
+                job_title,
+                c["years_experience"],
                 using_gemini=c.pop("_using_gemini", True),
             )
 
@@ -646,8 +680,7 @@ async def list_models():
                 "source": "Google Gemini API",
                 "task_types": ["retrieval_query (JD)", "retrieval_document (resumes)"],
                 "description": (
-                    "Batch embeddings — all resumes in one API call. "
-                    "Gemini Vision OCR auto-activates for scanned PDFs."
+                    "Batch embeddings — all resumes in one API call. " "Gemini Vision OCR auto-activates for scanned PDFs."
                 ),
                 "is_default": True,
                 "ready": _gemini_ready,
