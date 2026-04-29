@@ -12,7 +12,6 @@ import re
 import tempfile
 import time
 import uuid
-import shutil
 from typing import Any, Dict, List, Optional
 
 # Load .env for local development (no-op on Render where env vars are set in dashboard)
@@ -221,7 +220,6 @@ def _gemini_vision_ocr_sync(file_path: str, filename: str) -> str:
     Synchronous Gemini Vision OCR using the new google-genai SDK.
     Reads the PDF as a visual document — handles scanned/image-based PDFs.
     """
-    from google import genai as _genai
     from google.genai import types as _types
 
     if not _gemini_client:
@@ -295,7 +293,6 @@ def extract_skills(text: str) -> List[str]:
 
 def _gemini_embed_sync(texts: List[str], task_type: str) -> List[List[float]]:
     """Embed a batch of texts in ONE Gemini API call using the new google-genai SDK."""
-    from google import genai as _genai
     from google.genai import types as _types
 
     if not _gemini_client:
