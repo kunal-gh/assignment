@@ -19,7 +19,11 @@ export default function FileUpload() {
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
+      'application/x-pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc', '.docx'],
+      'text/plain': ['.pdf', '.docx'], // Sometimes Windows incorrectly reports MIME type as text/plain
+      '*/*': ['.pdf', '.docx'] // Catch-all for files ending in .pdf or .docx
     },
     maxSize: 10 * 1024 * 1024, // 10MB — enforced here AND on Vercel body limit
     multiple: true,

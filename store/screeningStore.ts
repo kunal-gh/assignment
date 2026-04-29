@@ -158,8 +158,7 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
       const data = await response.json();
       const results: ScreeningResults = typeof data.body === 'string' ? JSON.parse(data.body) : data;
 
-      set({ progress: 100, statusMessage: 'Done!' });
-      setTimeout(() => set({ results, isProcessing: false, progress: 0, statusMessage: '' }), 400);
+      set({ progress: 100, statusMessage: 'Done!', results, isProcessing: false, error: null });
 
     } catch (err) {
       clearInterval(progressInterval);
@@ -173,3 +172,4 @@ export const useScreeningStore = create<ScreeningState>((set, get) => ({
     }
   },
 }));
+
